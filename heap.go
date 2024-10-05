@@ -2,7 +2,7 @@ package bitknn
 
 import "unsafe"
 
-// neighborHeap is a max-heap that stores distances and their corresponding indices.
+// neighborHeap is a max-heap that stores data point's distances together with their indices in the training set.
 // The heap is used to keep track of nearest neighbors.
 type neighborHeap struct {
 	distances    []int
