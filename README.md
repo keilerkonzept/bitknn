@@ -19,6 +19,7 @@ You can optionally weigh class votes by distance, or specify different vote valu
 **Contents**
 - [Usage](#usage)
 - [Options](#options)
+- [Benchmarks](#benchmarks)
 - [License](#license)
 
 ## Usage
@@ -32,7 +33,7 @@ import (
 )
 
 func main() {
-		// feature vectors packed into uint64s
+    // feature vectors packed into uint64s
     data := []uint64{0b101010, 0b111000, 0b000111}
     // class labels
     labels := []int{0, 1, 1}
