@@ -53,7 +53,7 @@ func main() {
 - `WithLinearDecay()`: Apply linear distance weighting (`1 / (1 + dist)`).
 - `WithQuadraticDecay()`: Apply quadratic distance weighting (`1 / (1 + dist^2)`).
 - `WithDistanceWeightFunc(f func(dist int) float64)`: Use a custom distance weighting function.
-- `WithValues(values []float64)`: Assign specific vote values for each data point.
+- `WithValues(values []float64)`: Assign vote values for each data point.
 
 ## Benchmarks
 
