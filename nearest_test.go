@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/keilerkonzept/bitknn"
+	"github.com/keilerkonzept/bitknn/internal/testrandom"
 )
 
 func TestNearest(t *testing.T) {
@@ -39,7 +40,7 @@ func BenchmarkNearest(b *testing.B) {
 		for _, k := range []int{3, 10, 100} {
 			b.Run(fmt.Sprintf("N=%d_k=%d", dataSize, k), func(b *testing.B) {
 				query := rand.Uint64()
-				data := randomData(dataSize)
+				data := testrandom.Data(dataSize)
 				distances := make([]int, k+1)
 				indices := make([]int, k+1)
 

@@ -15,6 +15,8 @@ If you need to classify **binary feature vectors that fit into `uint64`s**, this
 
 You can optionally weigh class votes by distance, or specify different vote values per data point.
 
+The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) implements several [Locality-Sensitive Hashing (LSH)](https://en.m.wikipedia.org/wiki/Locality-sensitive_hashing) schemes for uint64 feature vectors.
+
 **Contents**
 - [Usage](#usage)
 - [Options](#options)
@@ -55,6 +57,7 @@ func main() {
 - `WithQuadraticDistanceWeighting()`: Apply quadratic distance weighting (`1 / (1 + dist^2)`).
 - `WithDistanceWeightingFunc(f func(dist int) float64)`: Use a custom distance weighting function.
 - `WithValues(values []float64)`: Assign vote values for each data point.
+
 
 ## Benchmarks
 

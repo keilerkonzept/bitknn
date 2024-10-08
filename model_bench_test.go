@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/keilerkonzept/bitknn"
+	"github.com/keilerkonzept/bitknn/internal/testrandom"
 )
 
 func Benchmark_Model_Predict1(b *testing.B) {
@@ -22,10 +23,10 @@ func Benchmark_Model_Predict1(b *testing.B) {
 		for _, dataSize := range bench.dataSize {
 			for _, k := range bench.k {
 				b.Run(fmt.Sprintf("N=%d_k=%d", dataSize, k), func(b *testing.B) {
-					data := randomData(dataSize)
-					labels := randomLabels(dataSize)
+					data := testrandom.Data(dataSize)
+					labels := testrandom.Labels(dataSize)
 					model := bitknn.Fit(data, labels)
-					query := rand.Uint64()
+					query := testrandom.Query()
 
 					model.PreallocateHeap(k)
 					b.ResetTimer()
@@ -51,9 +52,9 @@ func Benchmark_Model_Predict1V(b *testing.B) {
 		for _, dataSize := range bench.dataSize {
 			for _, k := range bench.k {
 				b.Run(fmt.Sprintf("N=%d_k=%d", dataSize, k), func(b *testing.B) {
-					data := randomData(dataSize)
-					labels := randomLabels(dataSize)
-					values := randomValues(dataSize)
+					data := testrandom.Data(dataSize)
+					labels := testrandom.Labels(dataSize)
+					values := testrandom.Values(dataSize)
 					model := bitknn.Fit(data, labels, bitknn.WithValues(values))
 					query := rand.Uint64()
 
@@ -82,8 +83,8 @@ func Benchmark_Model_Predict1D(b *testing.B) {
 			for _, dataSize := range bench.dataSize {
 				for _, k := range bench.k {
 					b.Run(fmt.Sprintf("DistFunc=%v_N=%d_k=%d", d, dataSize, k), func(b *testing.B) {
-						data := randomData(dataSize)
-						labels := randomLabels(dataSize)
+						data := testrandom.Data(dataSize)
+						labels := testrandom.Labels(dataSize)
 						model := bitknn.Fit(data, labels)
 						model.DistanceWeighting = d
 						model.DistanceWeightingFunc = func(d int) float64 { return 1 / float64(1+d) }
@@ -114,9 +115,9 @@ func Benchmark_Model_Predict1DV(b *testing.B) {
 			for _, dataSize := range bench.dataSize {
 				for _, k := range bench.k {
 					b.Run(fmt.Sprintf("DistFunc=%v_N=%d_k=%d", d, dataSize, k), func(b *testing.B) {
-						data := randomData(dataSize)
-						labels := randomLabels(dataSize)
-						values := randomValues(dataSize)
+						data := testrandom.Data(dataSize)
+						labels := testrandom.Labels(dataSize)
+						values := testrandom.Values(dataSize)
 						model := bitknn.Fit(data, labels, bitknn.WithValues(values))
 						model.DistanceWeighting = d
 						model.DistanceWeightingFunc = func(d int) float64 { return 1 / float64(1+d) }

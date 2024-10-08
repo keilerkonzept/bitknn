@@ -1,5 +1,7 @@
 package bitknn
 
+import "github.com/keilerkonzept/bitknn/internal/slice"
+
 // Create a k-NN model for the given data points and labels.
 func Fit(data []uint64, labels []int, opts ...Option) *Model {
 	m := &Model{
@@ -22,44 +24,31 @@ type Model struct {
 	// Vote values for each data point.
 	Values []float64
 
-	HeapDistances []int
-	HeapIndices   []int
-
 	// Distance weighting function.
 	DistanceWeighting DistanceWeighting
-	// Custom function when [ModelAny.DistanceWeighting] is [DistanceWeightingCustom].
+	// Custom function when [Model.DistanceWeighting] is [DistanceWeightingCustom].
 	DistanceWeightingFunc func(int) float64
+
+	HeapDistances []int
+	HeapIndices   []int
 }
 
 func (me *Model) PreallocateHeap(k int) {
-	me.HeapDistances = sliceOrAlloc(me.HeapDistances, k+1)
-	me.HeapIndices = sliceOrAlloc(me.HeapIndices, k+1)
+	me.HeapDistances = slice.OrAlloc(me.HeapDistances, k+1)
+	me.HeapIndices = slice.OrAlloc(me.HeapIndices, k+1)
 }
 
-// Predicts the label of a single input point. Allocates two slices of length K+1 for the neighbor heap.
-func (me *Model) Predict1Realloc(k int, x uint64, votes []float64) {
+// Predicts the label of a single input point. Each call allocates two new slices of length K+1 for the neighbor heap.
+func (me *Model) Predict1Alloc(k int, x uint64, votes []float64) {
 	distances, indices := make([]int, k+1), make([]int, k+1)
 	me.Predict1Into(k, x, distances, indices, votes)
 }
 
 // Predicts the label of a single input point. Reuses two slices of length K+1 for the neighbor heap.
 func (me *Model) Predict1(k int, x uint64, votes []float64) {
-	me.HeapDistances = sliceOrAlloc(me.HeapDistances, k+1)
-	me.HeapIndices = sliceOrAlloc(me.HeapIndices, k+1)
+	me.HeapDistances = slice.OrAlloc(me.HeapDistances, k+1)
+	me.HeapIndices = slice.OrAlloc(me.HeapIndices, k+1)
 	me.Predict1Into(k, x, me.HeapDistances, me.HeapIndices, votes)
-}
-
-func sliceOrAlloc(s []int, n int) []int {
-	if len(s) == n {
-		return s
-	}
-	if len(s) > n {
-		return s[:n]
-	}
-	if cap(s) < n {
-		return make([]int, n)
-	}
-	return s[:n]
 }
 
 // Predicts the label of a single input point, using the given slices for the neighbor heap.
@@ -69,33 +58,33 @@ func (me *Model) Predict1Into(k int, x uint64, distances []int, indices []int, v
 	switch me.DistanceWeighting {
 	case DistanceWeightingNone:
 		if me.Values == nil {
-			me.predict1(k, indices, votes)
+			me.Votes1(k, indices, votes)
 		} else {
-			me.predict1v(k, indices, votes)
+			me.Votes1v(k, indices, votes)
 		}
 	case DistanceWeightingLinear:
 		if me.Values == nil {
-			me.predict1l(k, indices, votes, distances)
+			me.Votes1l(k, indices, votes, distances)
 		} else {
-			me.predict1vl(k, indices, votes, distances)
+			me.Votes1vl(k, indices, votes, distances)
 		}
 	case DistanceWeightingQuadratic:
 		if me.Values == nil {
-			me.predict1q(k, indices, votes, distances)
+			me.Votes1q(k, indices, votes, distances)
 		} else {
-			me.predict1vq(k, indices, votes, distances)
+			me.Votes1vq(k, indices, votes, distances)
 		}
 	case DistanceWeightingCustom:
 		f := me.DistanceWeightingFunc
 		if me.Values == nil {
-			me.predict1c(k, indices, votes, f, distances)
+			me.Votes1c(k, indices, votes, f, distances)
 		} else {
-			me.predict1vc(k, indices, votes, f, distances)
+			me.Votes1vc(k, indices, votes, f, distances)
 		}
 	}
 }
 
-func (me *Model) predict1vc(k int, indices []int, votes []float64, f func(int) float64, distances []int) {
+func (me *Model) Votes1vc(k int, indices []int, votes []float64, f func(int) float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -103,7 +92,7 @@ func (me *Model) predict1vc(k int, indices []int, votes []float64, f func(int) f
 	}
 }
 
-func (me *Model) predict1c(k int, indices []int, votes []float64, f func(int) float64, distances []int) {
+func (me *Model) Votes1c(k int, indices []int, votes []float64, f func(int) float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -111,39 +100,39 @@ func (me *Model) predict1c(k int, indices []int, votes []float64, f func(int) fl
 	}
 }
 
-func (me *Model) predict1vq(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) Votes1vq(k int, indices []int, votes []float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += quadraticDecay(distances[i]) * me.Values[index]
+		votes[label] += DistanceWeightingFuncQuadratic(distances[i]) * me.Values[index]
 	}
 }
 
-func (me *Model) predict1q(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) Votes1q(k int, indices []int, votes []float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += quadraticDecay(distances[i])
+		votes[label] += DistanceWeightingFuncQuadratic(distances[i])
 	}
 }
 
-func (me *Model) predict1vl(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) Votes1vl(k int, indices []int, votes []float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += linearDecay(distances[i]) * me.Values[index]
+		votes[label] += DistanceWeightingFuncLinear(distances[i]) * me.Values[index]
 	}
 }
 
-func (me *Model) predict1l(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) Votes1l(k int, indices []int, votes []float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += linearDecay(distances[i])
+		votes[label] += DistanceWeightingFuncLinear(distances[i])
 	}
 }
 
-func (me *Model) predict1v(k int, indices []int, votes []float64) {
+func (me *Model) Votes1v(k int, indices []int, votes []float64) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -151,7 +140,7 @@ func (me *Model) predict1v(k int, indices []int, votes []float64) {
 	}
 }
 
-func (me *Model) predict1(k int, indices []int, votes []float64) {
+func (me *Model) Votes1(k int, indices []int, votes []float64) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -183,5 +172,5 @@ func (me DistanceWeighting) String() string {
 	return "unknown"
 }
 
-func linearDecay(dist int) float64    { return 1.0 / float64(1+dist) }
-func quadraticDecay(dist int) float64 { return 1.0 / float64(1+(dist*dist)) }
+func DistanceWeightingFuncLinear(dist int) float64    { return 1.0 / float64(1+dist) }
+func DistanceWeightingFuncQuadratic(dist int) float64 { return 1.0 / float64(1+(dist*dist)) }

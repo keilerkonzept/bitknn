@@ -42,7 +42,7 @@ func Test_Model_Predict1_Predict1Realloc(t *testing.T) {
 		}
 	}
 	{
-		model.Predict1Realloc(k, x, votes)
+		model.Predict1Alloc(k, x, votes)
 
 		expectedVotes := []float64{1, 1}
 		if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -52,7 +52,7 @@ func Test_Model_Predict1_Predict1Realloc(t *testing.T) {
 }
 
 func Test_Model_Reslice_Predict1(t *testing.T) {
-	data := []uint64{0b0000, 0b1111, 0b0011, 0b0101}
+	data := []uint64{0b0000, 0b11111, 0b0011, 0b0101}
 	labels := []int{0, 1, 1, 0}
 	values := []float64{1.0, 2.0, 3.0, 4.0}
 
@@ -70,7 +70,7 @@ func Test_Model_Reslice_Predict1(t *testing.T) {
 	}
 	model.Predict1(3, x, votes)
 	{
-		expectedVotes := []float64{1, 5}
+		expectedVotes := []float64{5, 3}
 		if diff := cmp.Diff(expectedVotes, votes); diff != "" {
 			t.Error(diff)
 		}
