@@ -1,5 +1,7 @@
 package slice
 
+// CountUniqueInSorted counts the number of unique elements in a sorted slice.
+// It assumes the input slice is already sorted.
 func CountUniqueInSorted[T comparable](s []T) int {
 	out := 0
 	var previous T
@@ -50,9 +52,11 @@ func GroupSorted[E any, K comparable](s []E, sKeys []K) (map[K]IndexRange, []K) 
 				previousIdx = i
 			}
 		}
-		groups[previous] = IndexRange{
-			Offset: previousIdx,
-			Length: len(s) - previousIdx,
+		if len(s) > 0 {
+			groups[previous] = IndexRange{
+				Offset: previousIdx,
+				Length: len(s) - previousIdx,
+			}
 		}
 	}
 	return groups, keys
