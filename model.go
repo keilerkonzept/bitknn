@@ -15,7 +15,7 @@ func Fit(data []uint64, labels []int, opts ...Option) *Model {
 
 // A k-NN model for uint64s.
 type Model struct {
-	// Input Data points.
+	// Input data points.
 	Data []uint64
 	// Class labels for each data point.
 	Labels []int
