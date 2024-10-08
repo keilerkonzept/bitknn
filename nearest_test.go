@@ -1,6 +1,7 @@
 package bitknn_test
 
 import (
+	"fmt"
 	"math/rand/v2"
 	"testing"
 
@@ -34,15 +35,19 @@ func TestNearest(t *testing.T) {
 }
 
 func BenchmarkNearest(b *testing.B) {
-	dataSize := 10_000
-	k := 5
-	query := rand.Uint64()
-	data := randomData(dataSize)
-	distances := make([]int, k+1)
-	indices := make([]int, k+1)
+	for _, dataSize := range []int{1000, 100_000, 1_000_000} {
+		for _, k := range []int{3, 10, 100} {
+			b.Run(fmt.Sprintf("N=%d_k=%d", dataSize, k), func(b *testing.B) {
+				query := rand.Uint64()
+				data := randomData(dataSize)
+				distances := make([]int, k+1)
+				indices := make([]int, k+1)
 
-	b.ResetTimer()
-	for n := 0; n < b.N; n++ {
-		bitknn.Nearest(data, k, query, distances, indices)
+				b.ResetTimer()
+				for n := 0; n < b.N; n++ {
+					bitknn.Nearest(data, k, query, distances, indices)
+				}
+			})
+		}
 	}
 }

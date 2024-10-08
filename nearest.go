@@ -2,6 +2,8 @@ package bitknn
 
 import (
 	"math/bits"
+
+	"github.com/keilerkonzept/bitknn/internal/heap"
 )
 
 // Nearest finds the nearest neighbors of the given point `x` by Hamming distance in `data`.
@@ -11,21 +13,25 @@ import (
 //
 //	cap(distances) = cap(indices) = k+1 >= 1
 func Nearest(data []uint64, k int, x uint64, distances, indices []int) int {
-	heap := makeNeighborHeap(distances, indices)
+	heap := heap.MakeMax(distances, indices)
 
+	k0 := min(k, len(data))
 	var maxDist int
-	for i := range data {
+	for i := 0; i < k0; i++ {
 		dist := bits.OnesCount64(x ^ data[i])
-		if i < k {
-			heap.push(dist, i)
-			maxDist = distances[0]
-			continue
-		}
+		heap.Push(dist, i)
+	}
+	if k0 < k {
+		return k0
+	}
+	maxDist = distances[0]
+	for i := k; i < len(data); i++ {
+		dist := bits.OnesCount64(x ^ data[i])
 		if dist >= maxDist {
 			continue
 		}
-		heap.pushpop(dist, i)
+		heap.PushPop(dist, i)
 		maxDist = distances[0]
 	}
-	return min(len(data), k)
+	return k
 }

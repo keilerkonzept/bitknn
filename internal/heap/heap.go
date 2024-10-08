@@ -1,41 +1,40 @@
-package bitknn
+package heap
 
 import "unsafe"
 
-// neighborHeap is a max-heap that stores data point's distances together with their indices in the training set.
-// The heap is used to keep track of nearest neighbors.
-type neighborHeap struct {
+// Max is a max-heap used to keep track of nearest neighbors.
+type Max[T int | uint64] struct {
 	distances    []int
 	lastDistance *int
-	indices      []int
-	lastIndex    *int
+	values       []T
+	lastValue    *T
 	len          int
 }
 
 const unsafeSizeofInt = unsafe.Sizeof(int(0))
 
-func makeNeighborHeap(distances, indices []int) neighborHeap {
-	return neighborHeap{
+func MakeMax[T int | uint64](distances []int, value []T) Max[T] {
+	return Max[T]{
 		distances:    distances,
 		lastDistance: (*int)(unsafe.Add(unsafe.Pointer(unsafe.SliceData(distances)), unsafeSizeofInt*uintptr(len(distances)-1))),
-		indices:      indices,
-		lastIndex:    (*int)(unsafe.Add(unsafe.Pointer(unsafe.SliceData(indices)), unsafeSizeofInt*uintptr(len(indices)-1))),
+		values:       value,
+		lastValue:    (*T)(unsafe.Add(unsafe.Pointer(unsafe.SliceData(value)), unsafe.Sizeof(T(0))*uintptr(len(value)-1))),
 	}
 }
 
-func (me *neighborHeap) swap(i, j int) {
+func (me *Max[T]) swap(i, j int) {
 	me.distances[i], me.distances[j] = me.distances[j], me.distances[i]
-	me.indices[i], me.indices[j] = me.indices[j], me.indices[i]
+	me.values[i], me.values[j] = me.values[j], me.values[i]
 }
 
-func (me *neighborHeap) less(i, j int) bool {
+func (me *Max[T]) less(i, j int) bool {
 	return me.distances[i] > me.distances[j]
 }
 
-func (me *neighborHeap) pushpop(value int, index int) {
+func (me *Max[T]) PushPop(dist int, value T) {
 	n := me.len
-	*me.lastDistance = value
-	*me.lastIndex = index
+	*me.lastDistance = dist
+	*me.lastValue = value
 	me.up(n)
 	me.swap(0, n)
 
@@ -58,15 +57,15 @@ func (me *neighborHeap) pushpop(value int, index int) {
 	}
 }
 
-func (me *neighborHeap) push(value int, index int) {
+func (me *Max[T]) Push(dist int, value T) {
 	n := me.len
-	me.distances[n] = value
-	me.indices[n] = index
+	me.distances[n] = dist
+	me.values[n] = value
 	me.len = n + 1
 	me.up(n)
 }
 
-func (me *neighborHeap) up(i int) {
+func (me *Max[T]) up(i int) {
 	for {
 		p := (i - 1) / 2              // Parent index
 		if p == i || !me.less(i, p) { // If parent is larger or i is root, stop
