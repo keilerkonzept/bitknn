@@ -15,7 +15,7 @@ If you need to classify **binary feature vectors that fit into `uint64`s**, this
 
 You can optionally weigh class votes by distance, or specify different vote values per data point.
 
-The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) implements several [Locality-Sensitive Hashing (LSH)](https://en.m.wikipedia.org/wiki/Locality-sensitive_hashing) schemes for uint64 feature vectors.
+The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) implements several [Locality-Sensitive Hashing (LSH)](https://en.m.wikipedia.org/wiki/Locality-sensitive_hashing) schemes for `uint64` feature vectors.
 
 **Contents**
 - [Usage](#usage)
