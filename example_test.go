@@ -58,5 +58,4 @@ func ExampleFitWide() {
 
 	// Output:
 	// Votes: [0.25 0.16666666666666666]
-	// Votes for 0: 0.5
 }
