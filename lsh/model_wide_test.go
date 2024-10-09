@@ -11,7 +11,7 @@ import (
 	"pgregory.net/rapid"
 )
 
-func Test_ModelWide_64bit_Equal_To_Narrow(t *testing.T) {
+func Test_WideModel_64bit_Equal_To_Narrow(t *testing.T) {
 	id := func(a uint64) uint64 { return a }
 	rapid.Check(t, func(t *rapid.T) {
 		k := rapid.IntRange(3, 1001).Draw(t, "k")

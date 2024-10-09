@@ -8,7 +8,7 @@ import (
 	"github.com/keilerkonzept/bitknn/internal/testrandom"
 )
 
-func Benchmark_ModelWide_Predict1(b *testing.B) {
+func Benchmark_WideModel_Predict1(b *testing.B) {
 	votes := make([]float64, 256)
 	type bench struct {
 		dim      []int
