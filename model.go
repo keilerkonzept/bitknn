@@ -1,5 +1,5 @@
 // Package bitknn provides a fast k-nearest neighbors (k-NN) implementation for binary feature vectors.
-// The sub-package [lsh] implements an approximate k-nearest neighbors (ANN) model using locality-sensitive hashing.
+// The sub-package [github.com/keilerkonzept/bitknn/lsh] implements an approximate k-nearest neighbors (ANN) model using locality-sensitive hashing.
 package bitknn
 
 import (
