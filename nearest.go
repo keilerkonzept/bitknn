@@ -14,25 +14,27 @@ import (
 //	cap(distances) = cap(indices) = k+1 >= 1
 func Nearest(data []uint64, k int, x uint64, distances, indices []int) int {
 	heap := heap.MakeMax(distances, indices)
+	distance0 := &distances[0]
 
 	k0 := min(k, len(data))
 
-	for i := 0; i < k0; i++ {
-		dist := bits.OnesCount64(x ^ data[i])
+	for i, d := range data[:k0] {
+		dist := bits.OnesCount64(x ^ d)
 		heap.Push(dist, i)
 	}
+
 	if k0 < k {
 		return k0
 	}
 
-	maxDist := distances[0]
+	maxDist := *distance0
 	for i := k; i < len(data); i++ {
 		dist := bits.OnesCount64(x ^ data[i])
 		if dist >= maxDist {
 			continue
 		}
 		heap.PushPop(dist, i)
-		maxDist = distances[0]
+		maxDist = *distance0
 	}
 	return k
 }

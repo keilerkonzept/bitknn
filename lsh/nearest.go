@@ -133,5 +133,4 @@ func nearestBuckets(bucketIDs []uint64, k int, x uint64, distance0 *int, heap *h
 		heap.PushPop(dist, b)
 		maxDist = *distance0
 	}
-	return
 }
