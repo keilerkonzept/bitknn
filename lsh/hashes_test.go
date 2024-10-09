@@ -66,20 +66,21 @@ func TestMinHash(t *testing.T) {
 		}
 	})
 
-	t.Run("MinHash_Hash", func(t *testing.T) {
-		h := lsh.RandomMinHash()
-		input := []uint64{0b1000, 0b1100, 0b1111}
-		output := make([]uint64, len(input))
-		h.Hash(input, output)
-
-		for i, v := range output {
-			if v >= 64 {
-				t.Errorf("MinHash.Hash() returned %d for input %b; want value < 64", v, input[i])
+	t.Run("MinHash_Hash1_Equiv_Hash", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			data := rapid.SliceOf(rapid.Uint64()).Draw(t, "data")
+			out := make([]uint64, len(data))
+			h := lsh.RandomMinHash()
+			h.Hash(data, out)
+			for i, d := range data {
+				if out[i] != h.Hash1(d) {
+					t.Fatal()
+				}
 			}
-		}
+		})
 	})
 
-	t.Run("MinHash_KLS_Property", func(t *testing.T) {
+	t.Run("MinHash_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
 		z := uint64(0b0001)
@@ -129,23 +130,20 @@ func TestBlur(t *testing.T) {
 		}
 	})
 
-	t.Run("Blur_Hash", func(t *testing.T) {
-		h := &lsh.Blur{
-			Masks:     []uint64{0xF0F0F0F0, 0x0F0F0F0F},
-			Threshold: 4,
-		}
-
-		input := []uint64{0xFFFFFFFF, 0xF0F0F0F0, 0x0F0F0F0F, 0x00000000}
-		output := make([]uint64, len(input))
-		want := []uint64{3, 2, 1, 0}
-
-		h.Hash(input, output)
-
-		for i, v := range output {
-			if v != want[i] {
-				t.Errorf("Blur.Hash() for input %x = %d; want %d", input[i], v, want[i])
+	t.Run("Blur_Hash1_Equiv_Hash", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			bits := rapid.IntRange(0, 64).Draw(t, "bits")
+			masks := rapid.IntRange(0, 10).Draw(t, "masks")
+			data := rapid.SliceOf(rapid.Uint64()).Draw(t, "data")
+			out := make([]uint64, len(data))
+			h := lsh.RandomBlur(bits, masks)
+			h.Hash(data, out)
+			for i, d := range data {
+				if out[i] != h.Hash1(d) {
+					t.Fatal()
+				}
 			}
-		}
+		})
 	})
 
 	t.Run("BoxBlur", func(t *testing.T) {
@@ -178,7 +176,7 @@ func TestBlur(t *testing.T) {
 		}
 	})
 
-	t.Run("Blur_Hamming_LS_Property", func(t *testing.T) {
+	t.Run("Blur_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
 		z := uint64(0b0001)
@@ -202,7 +200,7 @@ func TestBlur(t *testing.T) {
 		}
 	})
 
-	t.Run("BlurR_Hamming_LS_Property", func(t *testing.T) {
+	t.Run("BlurR_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
 		z := uint64(0b0001)
@@ -258,23 +256,22 @@ func TestBitSample(t *testing.T) {
 		}
 	})
 
-	t.Run("BitSample_Hash", func(t *testing.T) {
-		h := lsh.BitSample(0xF0F0F0F0)
-
-		input := []uint64{0xFFFFFFFF, 0x0F0F0F0F, 0xAAAAAAAA}
-		output := make([]uint64, len(input))
-		want := []uint64{0xF0F0F0F0, 0x00000000, 0xA0A0A0A0}
-
-		h.Hash(input, output)
-
-		for i, v := range output {
-			if v != want[i] {
-				t.Errorf("BitSample.Hash() for input %x = %x; want %x", input[i], v, want[i])
+	t.Run("BitSample_Hash1_Equiv_Hash", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			bits := rapid.IntRange(0, 64).Draw(t, "bits")
+			data := rapid.SliceOf(rapid.Uint64()).Draw(t, "data")
+			out := make([]uint64, len(data))
+			h := lsh.RandomBitSample(bits)
+			h.Hash(data, out)
+			for i, d := range data {
+				if out[i] != h.Hash1(d) {
+					t.Fatal()
+				}
 			}
-		}
+		})
 	})
 
-	t.Run("BitSample_Hamming_LS_Property", func(t *testing.T) {
+	t.Run("BitSample_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
 		z := uint64(0b0001)
@@ -298,7 +295,7 @@ func TestBitSample(t *testing.T) {
 		}
 	})
 
-	t.Run("BitSampleR_Hamming_LS_Property", func(t *testing.T) {
+	t.Run("BitSampleR_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
 		z := uint64(0b0001)
@@ -345,19 +342,22 @@ func TestMinHashes(t *testing.T) {
 		}
 	})
 
-	t.Run("MinHashes_Hash", func(t *testing.T) {
-		h := lsh.RandomMinHashes(3)
-		input := []uint64{0xFFFFFFFF, 0x00000000, 0xAAAAAAAA}
-		output := make([]uint64, len(input))
-		h.Hash(input, output)
-		for i, v := range output {
-			if v >= 1<<18 { // 3 * 6 bits
-				t.Errorf("MinHashes.Hash() for input %x = %d; want value < %d", input[i], v, 1<<18)
+	t.Run("MinHashes_Hash1_Equiv_Hash", func(t *testing.T) {
+		rapid.Check(t, func(t *rapid.T) {
+			masks := rapid.IntRange(0, 10).Draw(t, "masks")
+			data := rapid.SliceOf(rapid.Uint64()).Draw(t, "data")
+			out := make([]uint64, len(data))
+			h := lsh.RandomMinHashes(masks)
+			h.Hash(data, out)
+			for i, d := range data {
+				if out[i] != h.Hash1(d) {
+					t.Fatal()
+				}
 			}
-		}
+		})
 	})
 
-	t.Run("MinHashes_Hamming_LS_Property", func(t *testing.T) {
+	t.Run("MinHashes_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
 		z := uint64(0b0001)
@@ -381,7 +381,7 @@ func TestMinHashes(t *testing.T) {
 		}
 	})
 
-	t.Run("MinHashesR_Hamming_LS_Property", func(t *testing.T) {
+	t.Run("MinHashesR_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
 		z := uint64(0b0001)

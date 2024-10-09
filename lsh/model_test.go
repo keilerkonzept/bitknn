@@ -87,23 +87,23 @@ func Test_Model_NoHash_IsExact(t *testing.T) {
 			knn.PreallocateHeap(k)
 			ann.PreallocateHeap(k)
 			for _, q := range queries {
-				knn.Predict1(k, q, knnVotes)
+				knn.Predict1(k, q, bitknn.VoteSlice(knnVotes))
 
-				ann.Predict1(k, q, annVotes)
+				ann.Predict1(k, q, bitknn.VoteSlice(annVotes))
 				slices.Sort(knn.HeapDistances[:k])
 				slices.Sort(ann.HeapDistances[:k])
 				if !reflect.DeepEqual(knn.HeapDistances[:k], ann.HeapDistances[:k]) {
 					t.Fatal("NoHash ANN should result in the same distances for the nearest neighbors: ", knn.HeapDistances[:k], ann.HeapDistances[:k], knn.HeapIndices[:k], ann.HeapIndices[:k])
 				}
 
-				ann0.Predict1Alloc(k, q, annVotes)
+				ann0.Predict1Alloc(k, q, bitknn.VoteSlice(annVotes))
 				for i, vk := range knnVotes {
 					va := annVotes[i]
 					if math.Abs(vk-va) > eps {
 						t.Fatalf("ANN: %s: %v: %v %v", pair.name, q, knnVotes, annVotes)
 					}
 				}
-				ann0.Predict1(k, q, annVotes)
+				ann0.Predict1(k, q, bitknn.VoteSlice(annVotes))
 				for i, vk := range knnVotes {
 					va := annVotes[i]
 					if math.Abs(vk-va) > eps {

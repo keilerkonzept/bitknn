@@ -41,112 +41,117 @@ func (me *Model) PreallocateHeap(k int) {
 }
 
 // Predicts the label of a single input point. Each call allocates two new slices of length K+1 for the neighbor heap.
-func (me *Model) Predict1Alloc(k int, x uint64, votes []float64) {
+func (me *Model) Predict1Alloc(k int, x uint64, votes Votes) {
 	distances, indices := make([]int, k+1), make([]int, k+1)
 	me.Predict1Into(k, x, distances, indices, votes)
 }
 
 // Predicts the label of a single input point. Reuses two slices of length K+1 for the neighbor heap.
-func (me *Model) Predict1(k int, x uint64, votes []float64) {
+func (me *Model) Predict1(k int, x uint64, votes Votes) {
 	me.HeapDistances = slice.OrAlloc(me.HeapDistances, k+1)
 	me.HeapIndices = slice.OrAlloc(me.HeapIndices, k+1)
 	me.Predict1Into(k, x, me.HeapDistances, me.HeapIndices, votes)
 }
 
 // Predicts the label of a single input point, using the given slices for the neighbor heap.
-func (me *Model) Predict1Into(k int, x uint64, distances []int, indices []int, votes []float64) {
+func (me *Model) Predict1Into(k int, x uint64, distances []int, indices []int, votes Votes) {
 	k = Nearest(me.Data, k, x, distances, indices)
-	clear(votes)
+	me.Vote(k, distances, indices, votes)
+}
+
+// Predicts the label of a single input point, using the given slices for the neighbor heap.
+func (me *Model) Vote(k int, distances []int, indices []int, votes Votes) {
+	votes.Clear()
 	switch me.DistanceWeighting {
 	case DistanceWeightingNone:
 		if me.Values == nil {
-			me.Votes1(k, indices, votes)
+			me.votes1(k, indices, votes)
 		} else {
-			me.Votes1v(k, indices, votes)
+			me.votes1v(k, indices, votes)
 		}
 	case DistanceWeightingLinear:
 		if me.Values == nil {
-			me.Votes1l(k, indices, votes, distances)
+			me.votes1l(k, indices, votes, distances)
 		} else {
-			me.Votes1vl(k, indices, votes, distances)
+			me.votes1vl(k, indices, votes, distances)
 		}
 	case DistanceWeightingQuadratic:
 		if me.Values == nil {
-			me.Votes1q(k, indices, votes, distances)
+			me.votes1q(k, indices, votes, distances)
 		} else {
-			me.Votes1vq(k, indices, votes, distances)
+			me.votes1vq(k, indices, votes, distances)
 		}
 	case DistanceWeightingCustom:
 		f := me.DistanceWeightingFunc
 		if me.Values == nil {
-			me.Votes1c(k, indices, votes, f, distances)
+			me.votes1c(k, indices, votes, f, distances)
 		} else {
-			me.Votes1vc(k, indices, votes, f, distances)
+			me.votes1vc(k, indices, votes, f, distances)
 		}
 	}
 }
 
-func (me *Model) Votes1vc(k int, indices []int, votes []float64, f func(int) float64, distances []int) {
+func (me *Model) votes1vc(k int, indices []int, votes Votes, f func(int) float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += f(distances[i]) * me.Values[index]
+		votes.Add(label, f(distances[i])*me.Values[index])
 	}
 }
 
-func (me *Model) Votes1c(k int, indices []int, votes []float64, f func(int) float64, distances []int) {
+func (me *Model) votes1c(k int, indices []int, votes Votes, f func(int) float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += f(distances[i])
+		votes.Add(label, f(distances[i]))
 	}
 }
 
-func (me *Model) Votes1vq(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) votes1vq(k int, indices []int, votes Votes, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += DistanceWeightingFuncQuadratic(distances[i]) * me.Values[index]
+		votes.Add(label, DistanceWeightingFuncQuadratic(distances[i])*me.Values[index])
 	}
 }
 
-func (me *Model) Votes1q(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) votes1q(k int, indices []int, votes Votes, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += DistanceWeightingFuncQuadratic(distances[i])
+		votes.Add(label, DistanceWeightingFuncQuadratic(distances[i]))
 	}
 }
 
-func (me *Model) Votes1vl(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) votes1vl(k int, indices []int, votes Votes, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += DistanceWeightingFuncLinear(distances[i]) * me.Values[index]
+		votes.Add(label, DistanceWeightingFuncLinear(distances[i])*me.Values[index])
 	}
 }
 
-func (me *Model) Votes1l(k int, indices []int, votes []float64, distances []int) {
+func (me *Model) votes1l(k int, indices []int, votes Votes, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += DistanceWeightingFuncLinear(distances[i])
+		votes.Add(label, DistanceWeightingFuncLinear(distances[i]))
 	}
 }
 
-func (me *Model) Votes1v(k int, indices []int, votes []float64) {
+func (me *Model) votes1v(k int, indices []int, votes Votes) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label] += me.Values[index]
+		votes.Add(label, me.Values[index])
 	}
 }
 
-func (me *Model) Votes1(k int, indices []int, votes []float64) {
+func (me *Model) votes1(k int, indices []int, votes Votes) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
-		votes[label]++
+		votes.Add(label, 1)
 	}
 }
 

@@ -34,7 +34,7 @@ func Test_Model_Predict1_Predict1Realloc(t *testing.T) {
 	votes := make([]float64, k)
 	model.PreallocateHeap(k)
 	{
-		model.Predict1(k, x, votes)
+		model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 		expectedVotes := []float64{1, 1}
 		if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -42,7 +42,7 @@ func Test_Model_Predict1_Predict1Realloc(t *testing.T) {
 		}
 	}
 	{
-		model.Predict1Alloc(k, x, votes)
+		model.Predict1Alloc(k, x, bitknn.VoteSlice(votes))
 
 		expectedVotes := []float64{1, 1}
 		if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -61,21 +61,21 @@ func Test_Model_Reslice_Predict1(t *testing.T) {
 	x := uint64(0b0010)
 	votes := make([]float64, 2)
 	model.PreallocateHeap(3)
-	model.Predict1(2, x, votes)
+	model.Predict1(2, x, bitknn.VoteSlice(votes))
 	{
 		expectedVotes := []float64{1, 3}
 		if diff := cmp.Diff(expectedVotes, votes); diff != "" {
 			t.Error(diff)
 		}
 	}
-	model.Predict1(3, x, votes)
+	model.Predict1(3, x, bitknn.VoteSlice(votes))
 	{
 		expectedVotes := []float64{5, 3}
 		if diff := cmp.Diff(expectedVotes, votes); diff != "" {
 			t.Error(diff)
 		}
 	}
-	model.Predict1(2, x, votes)
+	model.Predict1(2, x, bitknn.VoteSlice(votes))
 
 	{
 		expectedVotes := []float64{1, 3}
@@ -85,7 +85,7 @@ func Test_Model_Reslice_Predict1(t *testing.T) {
 	}
 
 	{
-		model.Predict1(10, x, votes)
+		model.Predict1(10, x, bitknn.VoteSlice(votes))
 		expectedVotes := []float64{5, 5}
 		if diff := cmp.Diff(expectedVotes, votes); diff != "" {
 			t.Error(diff)
@@ -104,7 +104,7 @@ func Test_Model_Predict1V(t *testing.T) {
 	x := uint64(0b0010)
 	votes := make([]float64, 2)
 	model.PreallocateHeap(k)
-	model.Predict1(k, x, votes)
+	model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 	expectedVotes := []float64{1, 3}
 	if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -122,7 +122,7 @@ func Test_Model_Predict1D(t *testing.T) {
 	x := uint64(0b0001)
 	votes := make([]float64, 2)
 	model.PreallocateHeap(k)
-	model.Predict1(k, x, votes)
+	model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 	expectedVotes := []float64{1, 0.5}
 	if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -141,7 +141,7 @@ func Test_Model_Predict1VL(t *testing.T) {
 	x := uint64(0b0000)
 	votes := make([]float64, 2)
 	model.PreallocateHeap(k)
-	model.Predict1(k, x, votes)
+	model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 	expectedVotes := []float64{2, 1}
 	if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -159,7 +159,7 @@ func Test_Model_Predict1VQ(t *testing.T) {
 	x := uint64(0b0000)
 	votes := make([]float64, 2)
 	model.PreallocateHeap(k)
-	model.Predict1(k, x, votes)
+	model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 	expectedVotes := []float64{2, 0.8}
 	if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -176,7 +176,7 @@ func Test_Model_Predict1Q(t *testing.T) {
 	x := uint64(0b0000)
 	votes := make([]float64, 2)
 	model.PreallocateHeap(k)
-	model.Predict1(k, x, votes)
+	model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 	expectedVotes := []float64{1.2, 0.2}
 	if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -202,7 +202,7 @@ func Test_Model_Predict1VC(t *testing.T) {
 	x := uint64(0b0000)
 	votes := make([]float64, 2)
 	model.PreallocateHeap(k)
-	model.Predict1(k, x, votes)
+	model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 	expectedVotes := []float64{4, 3}
 	if diff := cmp.Diff(expectedVotes, votes); diff != "" {
@@ -227,7 +227,7 @@ func Test_Model_Predict1C(t *testing.T) {
 	x := uint64(0b0000)
 	votes := make([]float64, 3)
 	model.PreallocateHeap(k)
-	model.Predict1(k, x, votes)
+	model.Predict1(k, x, bitknn.VoteSlice(votes))
 
 	expectedVotes := []float64{2, 0, 1}
 	if diff := cmp.Diff(expectedVotes, votes); diff != "" {

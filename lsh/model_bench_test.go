@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/keilerkonzept/bitknn"
 	"github.com/keilerkonzept/bitknn/internal/testrandom"
 	"github.com/keilerkonzept/bitknn/lsh"
 )
@@ -34,7 +35,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 						model.PreallocateHeap(k)
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, votes)
+							model.Predict1(k, query, bitknn.VoteSlice(votes))
 						}
 					})
 				}

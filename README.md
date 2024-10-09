@@ -19,17 +19,23 @@ The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) 
 
 **Contents**
 - [Usage](#usage)
+  - [Basic usage](#basic-usage)
+  - [LSH](#lsh)
+  - [Packing wide data](#packing-wide-data)
 - [Options](#options)
 - [Benchmarks](#benchmarks)
 - [License](#license)
 
 ## Usage
 
+### Basic usage
+
 ```go
 package main
 
 import (
     "fmt"
+
     "github.com/keilerkonzept/bitknn"
 )
 
@@ -45,11 +51,120 @@ func main() {
     votes := make([]float64, 2)
 
     k := 2
-    model.Predict1(k, 0b101011, votes)
+    model.Predict1(k, 0b101011, bitknn.VoteSlice(votes))
 
-    fmt.Println("Votes:", votes)
+    fmt.Println("Votes:", bitknn.VoteSlice(votes))
+
+    // you can also use a map for the votes.
+    // this is good if you have a very large number of different labels:
+    votesMap := make(map[int]float64)
+    model.Predict1(k, 0b101011, bitknn.VoteMap(votesMap))
+    fmt.Println("Votes for 0:", votesMap[0])
 }
 ```
+
+### LSH
+
+Locality-Sensitive Hashing (LSH) is a type of approximate k-NN search. It's faster at the expense of accuracy.
+
+LSH works by hashing data points such that points that are close in Hamming space tend to land in the same bucket, and computing k-nearest neighbors only on the buckets with the k nearest hashes. In particular, for *k*=1 only one bucket needs to be examined.
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/keilerkonzept/bitknn/lsh"
+    "github.com/keilerkonzept/bitknn"
+)
+
+func main() {
+    // feature vectors packed into uint64s
+    data := []uint64{0b101010, 0b111000, 0b000111}
+    // class labels
+    labels := []int{0, 1, 1}
+
+    // Define a hash function (e.g., MinHash)
+    hash := lsh.RandomMinHash()
+
+    // Fit an LSH model
+    model := lsh.Fit(data, labels, hash, bitknn.WithLinearDistanceWeighting())
+
+    // one vote counter per class
+    votes := make([]float64, 2)
+
+    k := 2
+    model.Predict1(k, 0b101011, bitknn.VoteSlice(votes))
+
+    fmt.Println("Votes:", bitknn.VoteSlice(votes))
+
+    // you can also use a map for the votes
+    votesMap := make(map[int]float64)
+    model.Predict1(k, 0b101011, bitknn.VoteMap(votesMap))
+    fmt.Println("Votes for 0:", votesMap[0])
+}
+```
+
+The model accepts anything that implements the [`lsh.Hash` interface](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Hash) as a hash function. Several functions are pre-defined:
+
+- [MinHash](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#MinHash): An implementation of the [MinHash scheme](https://en.m.wikipedia.org/wiki/MinHash) for bit vectors.
+
+  Constructors: [RandomMinHash](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHash), [RandomMinHashR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHashR).
+- [MinHashes](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#MinHash): Concatenation of several *MinHash*es.
+
+  Constructors: [RandomMinHashes](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHashes), [RandomMinHashesR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHashesR).
+- [Blur](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Blur): A threshold-based variation on bit sampling.
+
+  Constructors: [RandomBlur](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBlur), [RandomBlurR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBlurR), [BoxBlur](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BoxBlur), .
+- [BitSample](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BitSample): A random sampling of bits from the feature vector.
+
+    Constructors: [RandomBitSample](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBitSample), [RandomBitSampleR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBitSampleR).
+
+For datasets of vectors longer than 64 bits, the `lsh` package also provides a [`lsh.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#FitWide) function, and "wide" versions of the hash functions ([MinHashWide](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#MinHashWide), [BlurWide](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BlurWide), [BitSampleWide](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BitSampleWide))
+
+The  [`lsh.Fit`/`lsh.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Fit) functions accept the same [Options](#options) as the others.
+
+### Packing wide data
+
+If your vectors are longer than 64 bits, you can still use `bitknn` if you [pack](https://pkg.go.dev/github.com/keilerkonzept/bitknn/pack) them into `[]uint64`. The [`pack` package](https://pkg.go.dev/github.com/keilerkonzept/bitknn/pack) defines helper functions to pack `string`s and `[]byte`s into `[]uint64`s.
+
+The exact k-NN model in `bitknn` and the approximate-NN model in `lsh` each have a `Wide` variant that accepts slice-valued data points:
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/keilerkonzept/bitknn"
+    "github.com/keilerkonzept/bitknn/pack"
+)
+
+func main() {
+    // feature vectors packed into uint64s
+    data := [][]uint64{
+    	pack.String("foo"),
+    	pack.String("bar"),
+    	pack.String("baz"),
+    }
+    // class labels
+    labels := []int{0, 1, 1}
+
+    // model := lsh.FitWide(data, labels, lsh.RandomMinHash(), bitknn.WithLinearDistanceWeighting())
+    model := bitknn.FitWide(data, labels, bitknn.WithLinearDistanceWeighting())
+
+    // one vote counter per class
+    votes := make([]float64, 2)
+
+    k := 2
+    query := pack.String("fob")
+    model.Predict1(k, query, bitknn.VoteSlice(votes))
+
+    fmt.Println("Votes:", bitknn.VoteSlice(votes))
+}
+```
+
+The wide model fitting function [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide) accepts the same [Options](#options) as the "narrow" one.
 
 ## Options
 

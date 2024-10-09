@@ -31,7 +31,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 					model.PreallocateHeap(k)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
-						model.Predict1(k, query, votes)
+						model.Predict1(k, query, bitknn.VoteSlice(votes))
 					}
 				})
 			}
@@ -61,7 +61,7 @@ func Benchmark_Model_Predict1V(b *testing.B) {
 					model.PreallocateHeap(k)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
-						model.Predict1(k, query, votes)
+						model.Predict1(k, query, bitknn.VoteSlice(votes))
 					}
 				})
 			}
@@ -92,7 +92,7 @@ func Benchmark_Model_Predict1D(b *testing.B) {
 
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, votes)
+							model.Predict1(k, query, bitknn.VoteSlice(votes))
 						}
 					})
 				}
@@ -125,7 +125,7 @@ func Benchmark_Model_Predict1DV(b *testing.B) {
 
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, votes)
+							model.Predict1(k, query, bitknn.VoteSlice(votes))
 						}
 					})
 				}

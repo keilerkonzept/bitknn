@@ -5,10 +5,16 @@ import (
 	"math/rand/v2"
 )
 
-// Hash is a hash function for the lsh package.
+// Hash is a uint64 hash function for the lsh package.
 type Hash interface {
 	Hash1(uint64) uint64
 	Hash(in []uint64, out []uint64)
+}
+
+// HashWide is a []uint64 hash function for the lsh package.
+type HashWide interface {
+	Hash1Wide([]uint64) uint64
+	HashWide(in [][]uint64, out []uint64)
 }
 
 // HashFunc is a function type that implements the Hash interface.
@@ -24,6 +30,24 @@ func (me HashFunc) Hash(data []uint64, out []uint64) {
 	}
 }
 
+// HashWide1 is a HashWide that applies a Hash only to the first dimension.
+type HashWide1 struct {
+	Single Hash
+}
+
+// Hash1 applies the function to a single uint64 value.
+func (me *HashWide1) Hash1Wide(x []uint64) uint64 {
+	return me.Single.Hash1(x[0])
+}
+
+// Hash applies the function to a slice of uint64 values.
+func (me *HashWide1) HashWide(data [][]uint64, out []uint64) {
+	for i, d := range data {
+		out[i] = me.Hash1Wide(d)
+	}
+}
+
+// HashCompose is the composition of several hash functions.
 type HashCompose []Hash
 
 // Hash1 applies the function to a single uint64 value.
@@ -59,8 +83,16 @@ type ConstantHash struct{}
 // Hash1 returns the given value.
 func (me ConstantHash) Hash1(x uint64) uint64 { return 0 }
 
-// Hash copies the input slice to the output slice.
+// Hash1 returns the given value.
+func (me ConstantHash) Hash1Wide(x []uint64) uint64 { return 0 }
+
+// Hash clears the output slice.
 func (me ConstantHash) Hash(data []uint64, out []uint64) {
+	clear(out)
+}
+
+// Hash clears the output slice.
+func (me ConstantHash) HashWide(data [][]uint64, out []uint64) {
 	clear(out)
 }
 
@@ -185,7 +217,7 @@ func (me Blur) Hash(data []uint64, out []uint64) {
 	}
 }
 
-// RandomBitSample generates a Blur of [n] bitmasks with the given number [numBits] of set bits.
+// RandomBlurR generates a Blur of [n] bitmasks with the given number [numBits] of set bits.
 func RandomBlurR(numBits int, n int, rand *rand.Rand) Blur {
 	bits := make([]uint64, n)
 	threshold := numBits/2 + 1
@@ -199,7 +231,7 @@ func RandomBlurR(numBits int, n int, rand *rand.Rand) Blur {
 	}
 }
 
-// RandomBitSample generates a Blur of [n] bitmasks with the given number [numBits] of set bits.
+// RandomBlur generates a Blur of [n] bitmasks with the given number [numBits] of set bits.
 func RandomBlur(numBits int, n int) Blur {
 	bits := make([]uint64, n)
 	threshold := numBits/2 + 1
@@ -213,7 +245,7 @@ func RandomBlur(numBits int, n int) Blur {
 	}
 }
 
-// BitSample is a random sampling of bits in a uint64 value.
+// BitSample is a random sample of bits in a uint64 value.
 // Only the bits set in the BitSample are kept.
 type BitSample uint64
 
@@ -261,6 +293,219 @@ func BoxBlur(radius int, step int) Blur {
 	}
 	return Blur{
 		Masks:     bits,
+		Threshold: threshold,
+	}
+}
+
+var _ HashWide = BitSampleWide{}
+
+// BitSampleWide is a random sample of bits in a slice of uint64 value.
+type BitSampleWide [][]uint64
+
+// Hash1 hashes a single uint64 value.
+func (me BitSampleWide) Hash1Wide(x []uint64) uint64 {
+	var out uint64
+	for j, bits := range me {
+		for _, bit := range bits {
+			out <<= 1
+			if (x[j] & bit) != 0 {
+				out |= 1
+			}
+		}
+	}
+	return out
+}
+
+// Hash hashes a slice of uint64 values.
+func (me BitSampleWide) HashWide(data [][]uint64, out []uint64) {
+	for i, d := range data {
+		var out1 uint64
+		for j, bits := range me {
+			for _, bit := range bits {
+				out1 <<= 1
+				if (d[j] & bit) != 0 {
+					out1 |= 1
+				}
+			}
+		}
+		out[i] = out1
+	}
+}
+
+// RandomBitSampleWide generates a BitSampleWide with a specified number of bits set to 1.
+func RandomBitSampleWide(dims int, n int) BitSampleWide {
+	ones := rand.Perm(64 * dims)
+	out := make([][]uint64, dims)
+	for i := 0; i < n; i++ {
+		bitIndex := ones[i]
+		dim := bitIndex / 64
+		out[dim] = append(out[dim], 1<<(ones[i]%64))
+	}
+	return BitSampleWide(out)
+}
+
+// RandomBitSampleWideR generates a BitSampleWide with a specified number of bits set to 1.
+func RandomBitSampleWideR(dims int, n int, rand *rand.Rand) BitSampleWide {
+	ones := rand.Perm(64 * dims)
+	out := make([][]uint64, dims)
+	for i := 0; i < n; i++ {
+		bitIndex := ones[i]
+		dim := bitIndex / 64
+		out[dim] = append(out[dim], 1<<(ones[i]%64))
+	}
+	return BitSampleWide(out)
+}
+
+var _ HashWide = MinHashWide{}
+
+type MinHashBit struct {
+	D int
+	M uint64
+}
+
+// MinHashWide is a MinHashWide function for Hamming space.
+type MinHashWide []MinHashBit
+
+// RandomMinHashWideR returns a random [MinHashWide].
+func RandomMinHashWideR(dims int, rand *rand.Rand) MinHashWide {
+	ones := rand.Perm(64 * dims)
+	out := make([]MinHashBit, len(ones))
+	for i, bitIndex := range ones {
+		dim := bitIndex / 64
+		bit := bitIndex % 64
+		out[i] = MinHashBit{
+			D: dim,
+			M: uint64(1) << bit,
+		}
+	}
+	return out
+}
+
+// RandomMinHashWide returns a random [MinHashWide].
+func RandomMinHashWide(dims int) MinHashWide {
+	ones := rand.Perm(64 * dims)
+	out := make([]MinHashBit, len(ones))
+	for i, bitIndex := range ones {
+		dim := bitIndex / 64
+		bit := bitIndex % 64
+		out[i] = MinHashBit{
+			D: dim,
+			M: uint64(1) << bit,
+		}
+	}
+	return out
+}
+
+// Hash1 hashes a single uint64 value.
+func (me MinHashWide) Hash1Wide(x []uint64) uint64 {
+	for j, b := range me {
+		if (x[b.D] & b.M) != 0 {
+			return uint64(j)
+		}
+	}
+	return 0 // never reached
+}
+
+// Hash hashes a slice of uint64 values.
+func (me MinHashWide) HashWide(data [][]uint64, out []uint64) {
+	for i, d := range data {
+		for j, b := range me {
+			if (d[b.D] & b.M) != 0 {
+				out[i] = uint64(j)
+				break
+			}
+		}
+	}
+}
+
+// BlurWide hashes values based on thresholding the number of bits in common with the given bitmasks.
+// For bitmasks of consecutive set bits, this is in effect a "blur" of the bit vector.
+type BlurWide struct {
+	Masks     [][]BlurWideMask // Bitmasks
+	Threshold int              // Minimum number of common bits required to set the output bit
+}
+
+type BlurWideMask struct {
+	D int
+	M uint64
+}
+
+// Hash1 hashes a single uint64 value.
+func (me BlurWide) Hash1Wide(x []uint64) uint64 {
+	var bx uint64
+	for _, bs := range me.Masks {
+		bx <<= 1
+		count := 0
+		for _, b := range bs {
+			count += bits.OnesCount64(x[b.D] & b.M)
+		}
+		if count >= me.Threshold {
+			bx |= 1
+		}
+	}
+	return bx
+}
+
+// Hash hashes a slice of uint64 values.
+func (me BlurWide) HashWide(data [][]uint64, out []uint64) {
+	for i, d := range data {
+		var bx uint64
+		for _, bs := range me.Masks {
+			bx <<= 1
+			count := 0
+			for _, b := range bs {
+				count += bits.OnesCount64(d[b.D] & b.M)
+			}
+			if count >= me.Threshold {
+				bx |= 1
+			}
+		}
+		out[i] = bx
+	}
+}
+
+// RandomBlurWideR generates a BlurWide of [n] bitmasks with the given number [numBits] of set bits.
+func RandomBlurWideR(dims int, numBits int, n int, rand *rand.Rand) BlurWide {
+	masks := make([][]BlurWideMask, n)
+	threshold := numBits/2 + 1
+	for i := range n {
+		mask := make([]BlurWideMask, 0, numBits)
+		ones := rand.Perm(64 * dims)[:numBits]
+		for _, bitIndex := range ones {
+			dim := bitIndex / 64
+			bit := bitIndex % 64
+			mask = append(mask, BlurWideMask{
+				D: dim,
+				M: 1 << bit,
+			})
+		}
+		masks[i] = mask
+	}
+	return BlurWide{
+		Masks:     masks,
+		Threshold: threshold,
+	}
+}
+
+// RandomBlurWide generates a BlurWide of [n] bitmasks with the given number [numBits] of set bits.
+func RandomBlurWide(dims int, numBits int, n int) BlurWide {
+	masks := make([][]BlurWideMask, n)
+	threshold := numBits/2 + 1
+	for i := range n {
+		mask := make([]BlurWideMask, 0, numBits)
+		ones := rand.Perm(64 * dims)[:numBits]
+		for _, bitIndex := range ones {
+			dim := bitIndex / 64
+			bit := bitIndex % 64
+			mask = append(mask, BlurWideMask{
+				D: dim,
+				M: 1 << bit,
+			})
+		}
+		masks[i] = mask
+	}
+	return BlurWide{
+		Masks:     masks,
 		Threshold: threshold,
 	}
 }
