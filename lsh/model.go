@@ -1,3 +1,10 @@
+// Package lsh implements Locality-Sensitive Hashing (LSH) for efficient approximate nearest neighbor search in Hamming space.
+//
+// This package also provides several hash functions for use with binary feature vectors (`uint64`), as well as `Wide` variants of the hash functions that work with the `[]uint64`s and the [ModelWide] model:
+//
+//   - [MinHash]: A hashing scheme for similarity search based on common bits.
+//   - [Blur]: Hashes values based on thresholding the number of bits in common with predefined bitmasks.
+//   - [BitSample]: A random sampling of bits in a feature vector.
 package lsh
 
 import (

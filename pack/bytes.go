@@ -1,3 +1,4 @@
+// Package pack provides helpers to pack bytes and strings into []uint64 slices.
 package pack
 
 // Bytes packs a byte slice into a uint64 slice.
