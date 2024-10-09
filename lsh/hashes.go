@@ -24,6 +24,24 @@ func (me HashFunc) Hash(data []uint64, out []uint64) {
 	}
 }
 
+type HashCompose []Hash
+
+// Hash1 applies the function to a single uint64 value.
+func (me HashCompose) Hash1(x uint64) uint64 {
+	for _, h := range me {
+		x = h.Hash1(x)
+	}
+	return x
+}
+
+// Hash applies the function to a slice of uint64 values.
+func (me HashCompose) Hash(data []uint64, out []uint64) {
+	for _, h := range me {
+		h.Hash(data, out)
+		data = out
+	}
+}
+
 // NoHash is the identity function. Used as a dummy [Hash] for testing.
 type NoHash struct{}
 
@@ -33,6 +51,17 @@ func (me NoHash) Hash1(x uint64) uint64 { return x }
 // Hash copies the input slice to the output slice.
 func (me NoHash) Hash(data []uint64, out []uint64) {
 	copy(out, data)
+}
+
+// ConstantHash is a constant 0 function. Used as a dummy [Hash] for testing.
+type ConstantHash struct{}
+
+// Hash1 returns the given value.
+func (me ConstantHash) Hash1(x uint64) uint64 { return 0 }
+
+// Hash copies the input slice to the output slice.
+func (me ConstantHash) Hash(data []uint64, out []uint64) {
+	clear(out)
 }
 
 // MinHashes is a concatenation of [MinHash]es
@@ -117,44 +146,9 @@ func (me MinHash) Hash(data []uint64, out []uint64) {
 		for j, m := range me {
 			if (d & m) != 0 {
 				out[i] = uint64(j)
+				break
 			}
 		}
-	}
-}
-
-var boxBlur3LUT = [8]uint64{
-	0, // 0b000,
-	0, // 0b001,
-	0, // 0b010,
-	1, // 0b011,
-	0, // 0b100,
-	1, // 0b101,
-	1, // 0b110,
-	1, // 0b111,
-}
-
-func boxBlur3(x uint64) uint64 {
-	var b uint64
-	b = boxBlur3LUT[x&0b11]
-	for i := range 61 {
-		b |= boxBlur3LUT[x&0b111] << (i + 1)
-		x >>= 1
-	}
-	return b
-}
-
-// BoxBlur3 hashes values by applying a box blur with radius 3 (each bit in the output is the average of the 3 neighboring bits in the input)
-type BoxBlur3 struct{}
-
-// Hash1 hashes a single uint64 value.
-func (me BoxBlur3) Hash1(x uint64) uint64 {
-	return boxBlur3(x)
-}
-
-// Hash hashes a slice of uint64 values.
-func (me BoxBlur3) Hash(data []uint64, out []uint64) {
-	for i, d := range data {
-		out[i] = boxBlur3(d)
 	}
 }
 
@@ -253,4 +247,20 @@ func RandomBitSampleR(numBitsSet int, rand *rand.Rand) BitSample {
 		out |= uint64(1) << ones[i]
 	}
 	return BitSample(out)
+}
+
+// BoxBlur generates a Blur that averages groups of neighboring bits for each bit in the output.
+func BoxBlur(radius int, step int) Blur {
+	mask := uint64(1<<radius) - 1
+	threshold := (radius / 2) + 1
+	n := 64
+	bits := make([]uint64, n)
+	for i := radius; i < 64-radius; i += step {
+		bits[i] = mask
+		mask <<= step
+	}
+	return Blur{
+		Masks:     bits,
+		Threshold: threshold,
+	}
 }

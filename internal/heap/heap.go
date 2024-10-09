@@ -22,6 +22,10 @@ func MakeMax[T int | uint64](distances []int, value []T) Max[T] {
 	}
 }
 
+func (me *Max[T]) Len() int {
+	return me.len
+}
+
 func (me *Max[T]) swap(i, j int) {
 	me.distances[i], me.distances[j] = me.distances[j], me.distances[i]
 	me.values[i], me.values[j] = me.values[j], me.values[i]

@@ -1,6 +1,8 @@
 package bitknn
 
-import "github.com/keilerkonzept/bitknn/internal/slice"
+import (
+	"github.com/keilerkonzept/bitknn/internal/slice"
+)
 
 // Create a k-NN model for the given data points and labels.
 func Fit(data []uint64, labels []int, opts ...Option) *Model {

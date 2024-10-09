@@ -17,12 +17,13 @@ func TestNearest(t *testing.T) {
 		}
 		k := 10
 		distances := make([]int, k+1)
+		bucketDistances := make([]int, k+1)
 		heapBucketIDs := make([]uint64, k+1)
 		indices := make([]int, k+1)
 
 		x := uint64(5)
 		xh := uint64(1)
-		k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, distances, heapBucketIDs, indices)
+		k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, bucketDistances, heapBucketIDs, distances, indices)
 
 		if 8 != k {
 			t.Fatal(k)
@@ -40,12 +41,13 @@ func TestNearest(t *testing.T) {
 		}
 		k := 3
 		distances := make([]int, k+1)
+		bucketDistances := make([]int, k+1)
 		heapBucketIDs := make([]uint64, k+1)
 		indices := make([]int, k+1)
 
 		x := uint64(5)
 		xh := uint64(1)
-		k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, distances, heapBucketIDs, indices)
+		k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, bucketDistances, heapBucketIDs, distances, indices)
 
 		if 3 != k {
 			t.Fatal(k)
@@ -65,13 +67,14 @@ func TestNearest(t *testing.T) {
 		}
 		k := 3
 		distances := make([]int, k+1)
+		bucketDistances := make([]int, k+1)
 		heapBucketIDs := make([]uint64, k+1)
 		indices := make([]int, k+1)
 
 		{
 			x := uint64(5)
 			xh := uint64(1)
-			k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, distances, heapBucketIDs, indices)
+			k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, bucketDistances, heapBucketIDs, distances, indices)
 
 			if 3 != k {
 				t.Fatal(k)
@@ -83,7 +86,7 @@ func TestNearest(t *testing.T) {
 		{
 			x := uint64(4)
 			xh := uint64(2)
-			k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, distances, heapBucketIDs, indices)
+			k, n := lsh.Nearest(data, bucketIDs, buckets, k, x, xh, bucketDistances, heapBucketIDs, distances, indices)
 
 			if 3 != k {
 				t.Fatal(k)

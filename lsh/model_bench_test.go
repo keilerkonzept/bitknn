@@ -15,17 +15,19 @@ func Benchmark_Model_Predict1(b *testing.B) {
 		dataSize []int
 		k        []int
 	}
+	mh := lsh.RandomMinHashR(testrandom.Source)
+	rbh := lsh.RandomBlurR(3, 20, testrandom.Source)
 	hashes := []lsh.Hash{
 		lsh.NoHash{},
-		lsh.BoxBlur3{},
-		lsh.RandomBitSampleR(48, testrandom.Source),
-		lsh.RandomBlurR(3, 10, testrandom.Source),
-		lsh.RandomMinHashR(testrandom.Source),
-		lsh.RandomMinHashesR(3, testrandom.Source),
+		lsh.HashCompose{rbh, mh},
+		lsh.RandomBitSampleR(30, testrandom.Source),
+		rbh,
+		mh,
+		lsh.RandomMinHashesR(10, testrandom.Source),
 	}
 	benches := []bench{
-		{hashes: hashes, dataSize: []int{100}, k: []int{3, 10}},
-		{hashes: hashes, dataSize: []int{1_000_000}, k: []int{1, 2, 3, 10, 100}},
+		// {hashes: hashes, dataSize: []int{100}, k: []int{1, 3, 10}},
+		{hashes: hashes, dataSize: []int{1_000_000}, k: []int{1, 1000}},
 	}
 	for _, bench := range benches {
 		for _, dataSize := range bench.dataSize {
@@ -35,9 +37,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 			for _, k := range bench.k {
 				for _, hash := range bench.hashes {
 					b.Run(fmt.Sprintf("hash=%T_N=%d_k=%d", hash, dataSize, k), func(b *testing.B) {
-
 						model := lsh.Fit(data, labels, hash)
-
 						model.PreallocateHeap(k)
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {

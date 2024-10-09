@@ -57,6 +57,10 @@ func TestNeighborHeapPushPop(t *testing.T) {
 
 	heap.PushPop(25, 4)
 
+	if heap.Len() != 3 {
+		t.Error("Expected length not to change")
+	}
+
 	// Check if heap is reordered correctly
 	expectedDistances := []int{25, 20, 10,
 		30,

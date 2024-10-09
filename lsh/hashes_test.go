@@ -7,20 +7,28 @@ import (
 
 	"github.com/keilerkonzept/bitknn/internal/testrandom"
 	"github.com/keilerkonzept/bitknn/lsh"
+	"pgregory.net/rapid"
 )
 
-func TestNoHash(t *testing.T) {
-	var h lsh.NoHash
-	query := uint64(0x12345)
-	data := []uint64{0x12345, 0x54321}
-	out := make([]uint64, len(data))
-	if h.Hash1(query) != query {
-		t.Fatal()
-	}
-	h.Hash(data, out)
-	if !reflect.DeepEqual(data, out) {
-		t.Fatal()
-	}
+func TestHashCompose(t *testing.T) {
+	h1 := lsh.RandomBlurR(3, 20, testrandom.Source)
+	h2 := lsh.RandomMinHash()
+	h := lsh.HashCompose{h1, h2}
+	rapid.Check(t, func(t *rapid.T) {
+		q := rapid.Uint64().Draw(t, "q")
+		qs := rapid.SliceOf(rapid.Uint64()).Draw(t, "qs")
+		if h.Hash1(q) != h2.Hash1(h1.Hash1(q)) {
+			t.Fatal()
+		}
+		out12 := make([]uint64, len(qs))
+		out := make([]uint64, len(qs))
+		h.Hash(qs, out)
+		h1.Hash(qs, out12)
+		h2.Hash(out12, out12)
+		if !reflect.DeepEqual(out, out12) {
+			t.Fatal()
+		}
+	})
 }
 
 func TestMinHash(t *testing.T) {
@@ -140,6 +148,36 @@ func TestBlur(t *testing.T) {
 		}
 	})
 
+	t.Run("BoxBlur", func(t *testing.T) {
+		trials := 1000
+		yCloser := 0
+		zCloser := 0
+		for range trials {
+			n := testrandom.Source.IntN(32)
+			dist := func(x, y uint64) int {
+				return bits.OnesCount64(x ^ y)
+			}
+			flipNBits := uint64(lsh.RandomBitSampleR(n, testrandom.Source))
+			flip2NBits := uint64(lsh.RandomBitSampleR(2*n, testrandom.Source))
+			x := testrandom.Query()
+			y := x ^ flipNBits
+			z := x ^ flip2NBits
+			h := lsh.BoxBlur(3, 3)
+			dy := dist(h.Hash1(x), h.Hash1(y))
+			dz := dist(h.Hash1(x), h.Hash1(z))
+			if dy < dz {
+				yCloser++
+			}
+			if dy > dz {
+				zCloser++
+			}
+		}
+
+		if zCloser > yCloser {
+			t.Errorf("Expected Hash1(x) to be closer to Hash1(y) more often than Hash1(x) to be closer to Hash1(z), got %d and %d", yCloser, zCloser)
+		}
+	})
+
 	t.Run("Blur_Hamming_LS_Property", func(t *testing.T) {
 		x := uint64(0b1110)
 		y := uint64(0b1100)
@@ -171,7 +209,7 @@ func TestBlur(t *testing.T) {
 
 		xyEqual := 0
 		xzEqual := 0
-		trials := 1000
+		trials := 10_000
 
 		for range trials {
 			h := lsh.RandomBlurR(3, 10, testrandom.Source)
@@ -350,7 +388,7 @@ func TestMinHashes(t *testing.T) {
 
 		xyEqual := 0
 		xzEqual := 0
-		trials := 1000
+		trials := 10_000
 
 		for range trials {
 			h := lsh.RandomMinHashesR(3, testrandom.Source)
@@ -390,67 +428,33 @@ func TestHashFunc(t *testing.T) {
 	}
 }
 
-func TestBoxBlur3(t *testing.T) {
-	t.Run("BoxBlur3_Hash1", func(t *testing.T) {
-		var h lsh.BoxBlur3
-
-		testCases := []struct {
-			input uint64
-			want  uint64
-		}{
-			{0xF0F0F0F0, 0xF0F0F0F0},
-			{0x0F0F0F0F, 0x0F0F0F0F},
-			{
-				0b11110010111100101111001011110010,
-				0b11110001111100011111000111110000,
-			},
+func TestDummyHashes(t *testing.T) {
+	t.Run("NoHash", func(t *testing.T) {
+		var h lsh.NoHash
+		query := uint64(0x12345)
+		data := []uint64{0x12345, 0x54321}
+		out := make([]uint64, len(data))
+		if h.Hash1(query) != query {
+			t.Fatal()
 		}
-
-		for _, tc := range testCases {
-			got := h.Hash1(tc.input)
-			if got != tc.want {
-				t.Errorf("BoxBlur3.Hash1(%x) = %x; want %x", tc.input, got, tc.want)
-			}
+		h.Hash(data, out)
+		if !reflect.DeepEqual(data, out) {
+			t.Fatal()
 		}
 	})
-
-	t.Run("BoxBlur3_Hash", func(t *testing.T) {
-		var h lsh.BoxBlur3
-
-		input := []uint64{0xF0F0F0F0, 0x0F0F0F0F, 0x72F2F2F2}
-		output := make([]uint64, len(input))
-		want := []uint64{0xF0F0F0F0, 0x0F0F0F0F, 0x71F1F1F0}
-
-		h.Hash(input, output)
-
-		for i, v := range output {
-			if v != want[i] {
-				t.Errorf("BoxBlur3.Hash() for input %x = %x; want %x", input[i], v, want[i])
-			}
+	t.Run("ConstantHash", func(t *testing.T) {
+		var h lsh.ConstantHash
+		q := uint64(0x12345)
+		data := []uint64{0x12345, 0x54321}
+		out := make([]uint64, len(data))
+		if h.Hash1(q) != 0 {
+			t.Fatal()
 		}
-	})
-
-	t.Run("BoxBlur3_Hamming_LS_Property", func(t *testing.T) {
-		xyEqual := 0
-		xzEqual := 0
-		trials := 1000
-		var h lsh.BoxBlur3
-		for range trials {
-			flip3Bits := uint64(lsh.RandomBitSampleR(3, testrandom.Source))
-			flip10Bits := uint64(lsh.RandomBitSampleR(10, testrandom.Source))
-			x := testrandom.Query()
-			y := x ^ flip3Bits
-			z := x ^ flip10Bits
-			if h.Hash1(x) == h.Hash1(y) {
-				xyEqual++
+		h.Hash(data, out)
+		for i := range out {
+			if out[i] != 0 {
+				t.Fatal()
 			}
-			if h.Hash1(x) == h.Hash1(z) {
-				xzEqual++
-			}
-		}
-
-		if xyEqual <= xzEqual {
-			t.Errorf("Expected Hash1(x) to equal Hash1(y) more often than Hash1(x) to equal Hash1(z), got %d and %d", xyEqual, xzEqual)
 		}
 	})
 }
