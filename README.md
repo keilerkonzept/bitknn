@@ -13,6 +13,8 @@ import "github.com/keilerkonzept/bitknn"
 
 If you need to classify **binary feature vectors that fit into `uint64`s**, this library might be useful. It is fast mainly because we can use cheap bitwise ops (XOR + POPCNT) to calculate distances between `uint64` values. For smaller datasets, the performance of the [neighbor heap](heap.go) is also relevant, and so this part has been tuned here also.
 
+If your vectors are **more than 64 bits long**, you can [pack](#packing-wide-data) them into `[]uint64` and classify them using the ["wide" model variants](#packing-wide-data).
+
 You can optionally weigh class votes by distance, or specify different vote values per data point.
 
 The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) implements several [Locality-Sensitive Hashing (LSH)](https://en.m.wikipedia.org/wiki/Locality-sensitive_hashing) schemes for `uint64` feature vectors.
