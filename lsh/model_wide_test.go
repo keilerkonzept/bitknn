@@ -14,7 +14,7 @@ import (
 func Test_WideModel_64bit_Equal_To_Narrow(t *testing.T) {
 	id := func(a uint64) uint64 { return a }
 	rapid.Check(t, func(t *rapid.T) {
-		k := rapid.IntRange(3, 1001).Draw(t, "k")
+		k := rapid.IntRange(1, 1001).Draw(t, "k")
 		data := rapid.SliceOfNDistinct(rapid.Uint64(), 3, 1000, id).Draw(t, "data")
 		dataWide := make([][]uint64, len(data))
 		for i := range data {

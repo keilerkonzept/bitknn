@@ -16,7 +16,7 @@ func Test_Model_NoHash_IsExact(t *testing.T) {
 	var h0 lsh.ConstantHash
 	id := func(a uint64) uint64 { return a }
 	rapid.Check(t, func(t *rapid.T) {
-		k := rapid.IntRange(3, 1001).Draw(t, "k")
+		k := rapid.IntRange(1, 1001).Draw(t, "k")
 		data := rapid.SliceOfNDistinct(rapid.Uint64(), 3, 1000, id).Draw(t, "data")
 		labels := rapid.SliceOfN(rapid.IntRange(0, 3), len(data), len(data)).Draw(t, "labels")
 		values := rapid.SliceOfN(rapid.Float64(), len(data), len(data)).Draw(t, "values")

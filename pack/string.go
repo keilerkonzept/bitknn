@@ -9,6 +9,18 @@ func String(data string) []uint64 {
 	return Bytes(b)
 }
 
+// StringPackedLength return the packed length of the given byte slice.
+func StringPackedLength(data string) int {
+	return (len(data) + 7) / 8
+}
+
+// String packs a string into the given pre-allocated uint64 slice.
+// The output slice should have length >=[StringPackedLength](data).
+func StringInto(data string, out []uint64) {
+	b := unsafe.Slice(unsafe.StringData(data), len(data))
+	BytesInto(b, out)
+}
+
 // StringInv unpacks a []uint64 slice as packed by [String],
 func StringInv(data []uint64, originalLengthBytes int) string {
 	b := BytesInv(data, originalLengthBytes)

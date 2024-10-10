@@ -14,7 +14,7 @@ func TestPackBytes(t *testing.T) {
 
 		// Property 1: Length of packed []uint64 should be (len(bytes) + 7) / 8
 		packed := pack.Bytes(bytesInput)
-		expectedLength := (len(bytesInput) + 7) / 8
+		expectedLength := pack.BytesPackedLength(bytesInput)
 		if len(packed) != expectedLength {
 			t.Fatalf("Expected packed length: %d, got: %d", expectedLength, len(packed))
 		}
