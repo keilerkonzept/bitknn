@@ -22,13 +22,16 @@ func (me *WideModel) PreallocateHeap(k int) {
 }
 
 // Predicts the label of a single input point. Reuses two slices of length K+1 for the neighbor heap.
-func (me *WideModel) Predict1(k int, x []uint64, votes Votes) {
+// Returns the number of neighbors found.
+func (me *WideModel) Predict1(k int, x []uint64, votes Votes) int {
 	me.Narrow.PreallocateHeap(k)
-	me.Predict1Into(k, x, me.Narrow.HeapDistances, me.Narrow.HeapIndices, votes)
+	return me.Predict1Into(k, x, me.Narrow.HeapDistances, me.Narrow.HeapIndices, votes)
 }
 
 // Predicts the label of a single input point, using the given slices for the neighbor heap.
-func (me *WideModel) Predict1Into(k int, x []uint64, distances []int, indices []int, votes Votes) {
+// Returns the number of neighbors found.
+func (me *WideModel) Predict1Into(k int, x []uint64, distances []int, indices []int, votes Votes) int {
 	k = NearestWide(me.WideData, k, x, distances, indices)
 	me.Narrow.Vote(k, distances, indices, votes)
+	return k
 }

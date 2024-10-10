@@ -84,7 +84,7 @@ func (me *WideModel) Predict1Alloc(k int, x []uint64, votes bitknn.Votes) int {
 // Predict1Into predicts the label for a single input using the given slices (of length [k]+1 each) for the neighbor heaps.
 func (me *WideModel) Predict1Into(k int, x []uint64, votes bitknn.Votes, bucketDistances []int, bucketIDs []uint64, distances []int, indices []int) int {
 	xp := me.Hash.Hash1Wide(x)
-	k, n := NearestWide(me.WideData, me.BucketIDs, me.Buckets, k, xp, x, bucketDistances, bucketIDs, distances, indices)
-	me.WideModel.Narrow.Vote(k, distances, indices, votes)
-	return n
+	k0, _ := NearestWide(me.WideData, me.BucketIDs, me.Buckets, k, xp, x, bucketDistances, bucketIDs, distances, indices)
+	me.WideModel.Narrow.Vote(k0, distances, indices, votes)
+	return k0
 }
