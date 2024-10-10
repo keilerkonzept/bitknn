@@ -13,6 +13,7 @@ func NearestWide(data [][]uint64, bucketIDs []uint64, buckets map[uint64]slice.I
 	exactBucket := buckets[xh]
 	numExamined := exactBucket.Length
 	nearestWideInBucket(data, exactBucket, k, x, &distances[0], &dataHeap)
+
 	// stop early for 1-NN
 	if k == 1 && dataHeap.Len() == k {
 		return k, exactBucket.Length
