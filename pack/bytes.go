@@ -65,15 +65,18 @@ func Bytes(data []byte) []uint64 {
 	return out
 }
 
-// BytesInv unpacks a []uint64 slice as packed by [Bytes],
-func BytesInv(data []uint64, originalLength int) []byte {
-	byteSlice := make([]byte, originalLength)
-
+// BytesInvInto unpacks a []uint64 slice as packed by [Bytes] into the given byte slice.
+func BytesInvInto(data []uint64, out []byte) {
 	for i := 0; i < len(data); i++ {
-		for j := 0; j < 8 && i*8+j < originalLength; j++ {
-			byteSlice[i*8+j] = byte((data[i] >> (8 * j)) & 0xFF)
+		for j := 0; j < 8 && i*8+j < len(out); j++ {
+			out[i*8+j] = byte(data[i] >> (8 * j))
 		}
 	}
+}
 
-	return byteSlice
+// BytesInv unpacks a []uint64 slice as packed by [Bytes],
+func BytesInv(data []uint64, originalLength int) []byte {
+	out := make([]byte, originalLength)
+	BytesInvInto(data, out)
+	return out
 }
