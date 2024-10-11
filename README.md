@@ -195,10 +195,10 @@ The wide model fitting function [`bitknn.FitWide`](https://pkg.go.dev/github.com
 
 ## Options
 
-- `WithLinearDistanceWeighting()`: Apply linear distance weighting (`1 / (1 + dist)`).
-- `WithQuadraticDistanceWeighting()`: Apply quadratic distance weighting (`1 / (1 + dist^2)`).
-- `WithDistanceWeightingFunc(f func(dist int) float64)`: Use a custom distance weighting function.
-- `WithValues(values []float64)`: Assign vote values for each data point.
+- [`bitknn.WithLinearDistanceWeighting()`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WithLinearDistanceWeighting): Apply linear distance weighting (`1 / (1 + dist)`).
+- [`bitknn.WithQuadraticDistanceWeighting()`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WithQuadraticDistanceWeighting): Apply quadratic distance weighting (`1 / (1 + dist^2)`).
+- [`bitknn.WithDistanceWeightingFunc(f func(dist int) float64)`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WithDistanceWeightingFunc): Use a custom distance weighting function.
+- [`bitknn.WithValues(values []float64)`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WithValues): Assign vote values for each data point.
 
 
 ## Benchmarks
