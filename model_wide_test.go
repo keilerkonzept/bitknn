@@ -42,8 +42,16 @@ func Test_Model_64bit_Equal_To_Narrow(t *testing.T) {
 			narrow.PreallocateHeap(k)
 			wide.PreallocateHeap(k)
 			for _, q := range queries {
-				narrow.Predict1(k, q, bitknn.VoteSlice(narrowVotes))
-				wide.Predict1(k, []uint64{q}, bitknn.VoteSlice(wideVotes))
+				nd, ni := narrow.Find(k, q)
+				wd, wi := wide.Find(k, []uint64{q})
+				if !reflect.DeepEqual(nd, wd) {
+					t.Fatal("Wide model should result in the same distances for the nearest neighbors as the narrow model: ", nd, wd)
+				}
+				if !reflect.DeepEqual(ni, wi) {
+					t.Fatal("Wide model should result in the same indices for the nearest neighbors as the narrow model: ", ni, wi)
+				}
+				narrow.Predict(k, q, bitknn.VoteSlice(narrowVotes))
+				wide.Predict(k, []uint64{q}, bitknn.VoteSlice(wideVotes))
 				slices.Sort(narrow.HeapDistances[:k])
 				slices.Sort(wide.Narrow.HeapDistances[:k])
 				if !reflect.DeepEqual(narrow.HeapDistances[:k], wide.Narrow.HeapDistances[:k]) {

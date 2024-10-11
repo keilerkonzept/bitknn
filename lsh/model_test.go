@@ -87,23 +87,35 @@ func Test_Model_NoHash_IsExact(t *testing.T) {
 			knn.PreallocateHeap(k)
 			ann.PreallocateHeap(k)
 			for _, q := range queries {
-				knn.Predict1(k, q, bitknn.VoteSlice(knnVotes))
-
-				ann.Predict1(k, q, bitknn.VoteSlice(annVotes))
+				knn.Predict(k, q, bitknn.VoteSlice(knnVotes))
+				ann.Predict(k, q, bitknn.VoteSlice(annVotes))
 				slices.Sort(knn.HeapDistances[:k])
 				slices.Sort(ann.HeapDistances[:k])
 				if !reflect.DeepEqual(knn.HeapDistances[:k], ann.HeapDistances[:k]) {
 					t.Fatal("NoHash ANN should result in the same distances for the nearest neighbors: ", knn.HeapDistances[:k], ann.HeapDistances[:k], knn.HeapIndices[:k], ann.HeapIndices[:k])
 				}
 
-				ann0.Predict1Alloc(k, q, bitknn.VoteSlice(annVotes))
+				kd, ki := knn.Find(k, q)
+				ad, ai := ann.Find(k, q)
+				slices.Sort(kd)
+				slices.Sort(ad)
+				if !reflect.DeepEqual(kd, ad) {
+					t.Fatal("NoHash ANN should result in the same distances for the nearest neighbors: ", kd, ad)
+				}
+				slices.Sort(ki)
+				slices.Sort(ai)
+				if !reflect.DeepEqual(ki, ai) {
+					t.Fatal("NoHash ANN should result in the same indices for the nearest neighbors: ", ki, ai)
+				}
+
+				ann0.PredictAlloc(k, q, bitknn.VoteSlice(annVotes))
 				for i, vk := range knnVotes {
 					va := annVotes[i]
 					if math.Abs(vk-va) > eps {
 						t.Fatalf("ANN: %s: %v: %v %v", pair.name, q, knnVotes, annVotes)
 					}
 				}
-				ann0.Predict1(k, q, bitknn.VoteSlice(annVotes))
+				ann0.Predict(k, q, bitknn.VoteSlice(annVotes))
 				for i, vk := range knnVotes {
 					va := annVotes[i]
 					if math.Abs(vk-va) > eps {

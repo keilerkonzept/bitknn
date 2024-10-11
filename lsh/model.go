@@ -72,24 +72,42 @@ func Fit(data []uint64, labels []int, hash Hash, opts ...bitknn.Option) *Model {
 	}
 }
 
-// Predict1 predicts the label for a single input using the LSH model.
-func (me *Model) Predict1(k int, x uint64, votes bitknn.VoteCounter) int {
+// Finds the nearest neighbors of the given point.
+// Writes their distances and indices in the dataset into the pre-allocated slices.
+// Returns the distance and index slices, truncated to the actual number of neighbors found.
+func (me *Model) Find(k int, x uint64) ([]int, []int) {
 	me.PreallocateHeap(k)
-	return me.Predict1Into(k, x, votes, me.HeapBucketDistances, me.HeapBucketIDs, me.HeapDistances, me.HeapIndices)
+	return me.FindInto(k, x, me.HeapBucketDistances, me.HeapBucketIDs, me.HeapDistances, me.HeapIndices)
+}
+
+// Finds the nearest neighbors of the given point.
+// Writes their distances and indices in the dataset into the provided slices.
+// The slices should be pre-allocated to length k+1.
+// Returns the distance and index slices, truncated to the actual number of neighbors found.
+func (me *Model) FindInto(k int, x uint64, bucketDistances []int, bucketIDs []uint64, distances []int, indices []int) ([]int, []int) {
+	xp := me.Hash.Hash1(x)
+	k, _ = Nearest(me.Data, me.BucketIDs, me.Buckets, k, xp, x, bucketDistances, bucketIDs, distances, indices)
+	return distances[:k], indices[:k]
+}
+
+// Predict predicts the label for a single input using the LSH model.
+func (me *Model) Predict(k int, x uint64, votes bitknn.VoteCounter) int {
+	me.PreallocateHeap(k)
+	return me.PredictInto(k, x, votes, me.HeapBucketDistances, me.HeapBucketIDs, me.HeapDistances, me.HeapIndices)
 }
 
 // Predicts the label of a single input point. Each call allocates three new slices of length [k]+1 for the neighbor heaps.
-func (me *Model) Predict1Alloc(k int, x uint64, votes bitknn.VoteCounter) int {
+func (me *Model) PredictAlloc(k int, x uint64, votes bitknn.VoteCounter) int {
 	bucketDistances := make([]int, k+1)
 	bucketIDs := make([]uint64, k+1)
 	distances := make([]int, k+1)
 	indices := make([]int, k+1)
 
-	return me.Predict1Into(k, x, votes, bucketDistances, bucketIDs, distances, indices)
+	return me.PredictInto(k, x, votes, bucketDistances, bucketIDs, distances, indices)
 }
 
-// Predict1Into predicts the label for a single input using the given slices (of length [k]+1 each) for the neighbor heaps.
-func (me *Model) Predict1Into(k int, x uint64, votes bitknn.VoteCounter, bucketDistances []int, bucketIDs []uint64, distances []int, indices []int) int {
+// PredictInto predicts the label for a single input using the given slices (of length [k]+1 each) for the neighbor heaps.
+func (me *Model) PredictInto(k int, x uint64, votes bitknn.VoteCounter, bucketDistances []int, bucketIDs []uint64, distances []int, indices []int) int {
 	xp := me.Hash.Hash1(x)
 	k, n := Nearest(me.Data, me.BucketIDs, me.Buckets, k, xp, x, bucketDistances, bucketIDs, distances, indices)
 	me.Vote(k, distances, indices, votes)

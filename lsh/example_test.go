@@ -23,13 +23,13 @@ func Example() {
 	votes := make([]float64, 2)
 
 	k := 2
-	model.Predict1(k, 0b101011, bitknn.VoteSlice(votes))
+	model.Predict(k, 0b101011, bitknn.VoteSlice(votes))
 
 	fmt.Println("Votes:", bitknn.VoteSlice(votes))
 
 	// you can also use a map for the votes
 	votesMap := make(map[int]float64)
-	model.Predict1(k, 0b101011, bitknn.VoteMap(votesMap))
+	model.Predict(k, 0b101011, bitknn.VoteMap(votesMap))
 	fmt.Println("Votes for 0:", votesMap[0])
 	// Output:
 	// Votes: [0.5 0.25]

@@ -19,14 +19,16 @@ func Example() {
 	votes := make([]float64, 2)
 
 	k := 2
-	model.Predict1(k, 0b101011, bitknn.VoteSlice(votes))
+	model.Predict(k, 0b101011, bitknn.VoteSlice(votes))
+	// or, just return the nearest neighbor's distances and indices:
+	// distances,indices := model.Find(k, 0b101011)
 
 	fmt.Println("Votes:", bitknn.VoteSlice(votes))
 
 	// you can also use a map for the votes.
 	// this is good if you have a very large number of different labels:
 	votesMap := make(map[int]float64)
-	model.Predict1(k, 0b101011, bitknn.VoteMap(votesMap))
+	model.Predict(k, 0b101011, bitknn.VoteMap(votesMap))
 	fmt.Println("Votes for 0:", votesMap[0])
 	// Output:
 	// Votes: [0.5 0.25]
@@ -52,7 +54,7 @@ func ExampleFitWide() {
 
 	k := 2
 	query := pack.String("fob")
-	model.Predict1(k, query, bitknn.VoteSlice(votes))
+	model.Predict(k, query, bitknn.VoteSlice(votes))
 
 	fmt.Println("Votes:", bitknn.VoteSlice(votes))
 

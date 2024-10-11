@@ -42,21 +42,38 @@ func (me *Model) PreallocateHeap(k int) {
 	me.HeapIndices = slice.OrAlloc(me.HeapIndices, k+1)
 }
 
+// Finds the nearest neighbors of the given point.
+// Writes their distances and indices in the dataset into the pre-allocated slices.
+// Returns the distance and index slices, truncated to the actual number of neighbors found.
+func (me *Model) Find(k int, x uint64) ([]int, []int) {
+	me.PreallocateHeap(k)
+	return me.FindInto(k, x, me.HeapDistances, me.HeapIndices)
+}
+
+// Finds the nearest neighbors of the given point.
+// Writes their distances and indices in the dataset into the provided slices.
+// The slices should be pre-allocated to length k+1.
+// Returns the distance and index slices, truncated to the actual number of neighbors found.
+func (me *Model) FindInto(k int, x uint64, distances []int, indices []int) ([]int, []int) {
+	k = Nearest(me.Data, k, x, distances, indices)
+	return distances[:k], indices[:k]
+}
+
 // Predicts the label of a single input point. Each call allocates two new slices of length K+1 for the neighbor heap.
-func (me *Model) Predict1Alloc(k int, x uint64, votes VoteCounter) {
+func (me *Model) PredictAlloc(k int, x uint64, votes VoteCounter) {
 	distances, indices := make([]int, k+1), make([]int, k+1)
-	me.Predict1Into(k, x, distances, indices, votes)
+	me.PredictInto(k, x, distances, indices, votes)
 }
 
 // Predicts the label of a single input point. Reuses two slices of length K+1 for the neighbor heap.
-func (me *Model) Predict1(k int, x uint64, votes VoteCounter) {
+func (me *Model) Predict(k int, x uint64, votes VoteCounter) {
 	me.HeapDistances = slice.OrAlloc(me.HeapDistances, k+1)
 	me.HeapIndices = slice.OrAlloc(me.HeapIndices, k+1)
-	me.Predict1Into(k, x, me.HeapDistances, me.HeapIndices, votes)
+	me.PredictInto(k, x, me.HeapDistances, me.HeapIndices, votes)
 }
 
 // Predicts the label of a single input point, using the given slices for the neighbor heap.
-func (me *Model) Predict1Into(k int, x uint64, distances []int, indices []int, votes VoteCounter) {
+func (me *Model) PredictInto(k int, x uint64, distances []int, indices []int, votes VoteCounter) {
 	k = Nearest(me.Data, k, x, distances, indices)
 	me.Vote(k, distances, indices, votes)
 }

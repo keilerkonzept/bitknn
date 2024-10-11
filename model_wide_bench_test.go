@@ -8,7 +8,7 @@ import (
 	"github.com/keilerkonzept/bitknn/internal/testrandom"
 )
 
-func Benchmark_WideModel_Predict1(b *testing.B) {
+func Benchmark_WideModel_Predict(b *testing.B) {
 	type bench struct {
 		dim      []int
 		dataSize []int
@@ -31,7 +31,7 @@ func Benchmark_WideModel_Predict1(b *testing.B) {
 						model.PreallocateHeap(k)
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, bitknn.DiscardVotes)
+							model.Predict(k, query, bitknn.DiscardVotes)
 						}
 					})
 				}

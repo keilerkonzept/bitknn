@@ -9,7 +9,7 @@ import (
 	"github.com/keilerkonzept/bitknn/internal/testrandom"
 )
 
-func Benchmark_Model_Predict1(b *testing.B) {
+func Benchmark_Model_Predict(b *testing.B) {
 	type bench struct {
 		dataSize []int
 		k        []int
@@ -30,7 +30,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 					model.PreallocateHeap(k)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
-						model.Predict1(k, query, bitknn.DiscardVotes)
+						model.Predict(k, query, bitknn.DiscardVotes)
 					}
 				})
 			}
@@ -38,7 +38,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 	}
 }
 
-func Benchmark_Model_Predict1V(b *testing.B) {
+func Benchmark_Model_PredictV(b *testing.B) {
 	votes := make([]float64, 256)
 	type bench struct {
 		dataSize []int
@@ -61,7 +61,7 @@ func Benchmark_Model_Predict1V(b *testing.B) {
 					voteSlice := bitknn.VoteSlice(votes)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
-						model.Predict1(k, query, &voteSlice)
+						model.Predict(k, query, &voteSlice)
 					}
 				})
 			}
@@ -69,7 +69,7 @@ func Benchmark_Model_Predict1V(b *testing.B) {
 	}
 }
 
-func Benchmark_Model_Predict1D(b *testing.B) {
+func Benchmark_Model_PredictD(b *testing.B) {
 	votes := make([]float64, 256)
 	type bench struct {
 		dataSize []int
@@ -93,7 +93,7 @@ func Benchmark_Model_Predict1D(b *testing.B) {
 
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, &voteSlice)
+							model.Predict(k, query, &voteSlice)
 						}
 					})
 				}
@@ -102,7 +102,7 @@ func Benchmark_Model_Predict1D(b *testing.B) {
 	}
 }
 
-func Benchmark_Model_Predict1DV(b *testing.B) {
+func Benchmark_Model_PredictDV(b *testing.B) {
 	votes := make([]float64, 256)
 	type bench struct {
 		dataSize []int
@@ -127,7 +127,7 @@ func Benchmark_Model_Predict1DV(b *testing.B) {
 
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, &voteSlice)
+							model.Predict(k, query, &voteSlice)
 						}
 					})
 				}

@@ -9,7 +9,7 @@ import (
 	"github.com/keilerkonzept/bitknn/lsh"
 )
 
-func Benchmark_Model_Predict1(b *testing.B) {
+func Benchmark_Model_Predict(b *testing.B) {
 	type bench struct {
 		hashes   []lsh.Hash
 		dataSize []int
@@ -34,7 +34,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 						model.PreallocateHeap(k)
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, bitknn.DiscardVotes)
+							model.Predict(k, query, bitknn.DiscardVotes)
 						}
 					})
 				}

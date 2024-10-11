@@ -44,14 +44,20 @@ func Test_WideModel_64bit_Equal_To_Narrow(t *testing.T) {
 			narrow.PreallocateHeap(k)
 			wide.PreallocateHeap(k)
 			for _, q := range queries {
-				narrow.Predict1(k, q, bitknn.VoteSlice(narrowVotes))
-				wide.Predict1(k, []uint64{q}, bitknn.VoteSlice(wideVotes))
-				slices.Sort(narrow.HeapDistances[:k])
-				slices.Sort(wide.Narrow.HeapDistances[:k])
+				nd, ni := narrow.Find(k, q)
+				wd, wi := wide.Find(k, []uint64{q})
+				if !reflect.DeepEqual(nd, wd) {
+					t.Fatal("Wide KNN should result in the same distances for the nearest neighbors: ", nd, wd)
+				}
+				if !reflect.DeepEqual(ni, wi) {
+					t.Fatal("Wide ANN should result in the same indices for the nearest neighbors: ", ni, wi)
+				}
+				narrow.Predict(k, q, bitknn.VoteSlice(narrowVotes))
+				wide.Predict(k, []uint64{q}, bitknn.VoteSlice(wideVotes))
 				if !reflect.DeepEqual(narrow.HeapDistances[:k], wide.Narrow.HeapDistances[:k]) {
 					t.Fatal("Wide KNN should result in the same distances for the nearest neighbors: ", narrow.HeapDistances[:k], wide.Narrow.HeapDistances[:k])
 				}
-				if !reflect.DeepEqual(narrow.HeapDistances[:k], wide.Narrow.HeapDistances[:k]) {
+				if !reflect.DeepEqual(narrow.HeapIndices[:k], wide.Narrow.HeapIndices[:k]) {
 					t.Fatal("Wide ANN should result in the same indices for the nearest neighbors: ", narrow.HeapIndices[:k], wide.Narrow.HeapIndices[:k])
 				}
 				for i, vk := range narrowVotes {
@@ -60,13 +66,15 @@ func Test_WideModel_64bit_Equal_To_Narrow(t *testing.T) {
 						t.Fatalf("%s: %v: %v %v", pair.name, q, narrowVotes, wideVotes)
 					}
 				}
-				wide.Predict1Alloc(k, []uint64{q}, bitknn.VoteSlice(wideVotes))
+				wide.PredictAlloc(k, []uint64{q}, bitknn.VoteSlice(wideVotes))
 				slices.Sort(narrow.HeapDistances[:k])
 				slices.Sort(wide.Narrow.HeapDistances[:k])
 				if !reflect.DeepEqual(narrow.HeapDistances[:k], wide.Narrow.HeapDistances[:k]) {
 					t.Fatal("Wide KNN should result in the same distances for the nearest neighbors: ", narrow.HeapDistances[:k], wide.Narrow.HeapDistances[:k])
 				}
-				if !reflect.DeepEqual(narrow.HeapDistances[:k], wide.Narrow.HeapDistances[:k]) {
+				slices.Sort(narrow.HeapIndices[:k])
+				slices.Sort(wide.Narrow.HeapIndices[:k])
+				if !reflect.DeepEqual(narrow.HeapIndices[:k], wide.Narrow.HeapIndices[:k]) {
 					t.Fatal("Wide ANN should result in the same indices for the nearest neighbors: ", narrow.HeapIndices[:k], wide.Narrow.HeapIndices[:k])
 				}
 				for i, vk := range narrowVotes {
