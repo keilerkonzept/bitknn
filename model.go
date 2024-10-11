@@ -43,26 +43,26 @@ func (me *Model) PreallocateHeap(k int) {
 }
 
 // Predicts the label of a single input point. Each call allocates two new slices of length K+1 for the neighbor heap.
-func (me *Model) Predict1Alloc(k int, x uint64, votes Votes) {
+func (me *Model) Predict1Alloc(k int, x uint64, votes VoteCounter) {
 	distances, indices := make([]int, k+1), make([]int, k+1)
 	me.Predict1Into(k, x, distances, indices, votes)
 }
 
 // Predicts the label of a single input point. Reuses two slices of length K+1 for the neighbor heap.
-func (me *Model) Predict1(k int, x uint64, votes Votes) {
+func (me *Model) Predict1(k int, x uint64, votes VoteCounter) {
 	me.HeapDistances = slice.OrAlloc(me.HeapDistances, k+1)
 	me.HeapIndices = slice.OrAlloc(me.HeapIndices, k+1)
 	me.Predict1Into(k, x, me.HeapDistances, me.HeapIndices, votes)
 }
 
 // Predicts the label of a single input point, using the given slices for the neighbor heap.
-func (me *Model) Predict1Into(k int, x uint64, distances []int, indices []int, votes Votes) {
+func (me *Model) Predict1Into(k int, x uint64, distances []int, indices []int, votes VoteCounter) {
 	k = Nearest(me.Data, k, x, distances, indices)
 	me.Vote(k, distances, indices, votes)
 }
 
 // Predicts the label of a single input point, using the given slices for the neighbor heap.
-func (me *Model) Vote(k int, distances []int, indices []int, votes Votes) {
+func (me *Model) Vote(k int, distances []int, indices []int, votes VoteCounter) {
 	votes.Clear()
 	switch me.DistanceWeighting {
 	case DistanceWeightingNone:
@@ -93,7 +93,7 @@ func (me *Model) Vote(k int, distances []int, indices []int, votes Votes) {
 	}
 }
 
-func (me *Model) votes1vc(k int, indices []int, votes Votes, f func(int) float64, distances []int) {
+func (me *Model) votes1vc(k int, indices []int, votes VoteCounter, f func(int) float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -101,7 +101,7 @@ func (me *Model) votes1vc(k int, indices []int, votes Votes, f func(int) float64
 	}
 }
 
-func (me *Model) votes1c(k int, indices []int, votes Votes, f func(int) float64, distances []int) {
+func (me *Model) votes1c(k int, indices []int, votes VoteCounter, f func(int) float64, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -109,7 +109,7 @@ func (me *Model) votes1c(k int, indices []int, votes Votes, f func(int) float64,
 	}
 }
 
-func (me *Model) votes1vq(k int, indices []int, votes Votes, distances []int) {
+func (me *Model) votes1vq(k int, indices []int, votes VoteCounter, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -117,7 +117,7 @@ func (me *Model) votes1vq(k int, indices []int, votes Votes, distances []int) {
 	}
 }
 
-func (me *Model) votes1q(k int, indices []int, votes Votes, distances []int) {
+func (me *Model) votes1q(k int, indices []int, votes VoteCounter, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -125,7 +125,7 @@ func (me *Model) votes1q(k int, indices []int, votes Votes, distances []int) {
 	}
 }
 
-func (me *Model) votes1vl(k int, indices []int, votes Votes, distances []int) {
+func (me *Model) votes1vl(k int, indices []int, votes VoteCounter, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -133,7 +133,7 @@ func (me *Model) votes1vl(k int, indices []int, votes Votes, distances []int) {
 	}
 }
 
-func (me *Model) votes1l(k int, indices []int, votes Votes, distances []int) {
+func (me *Model) votes1l(k int, indices []int, votes VoteCounter, distances []int) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -141,7 +141,7 @@ func (me *Model) votes1l(k int, indices []int, votes Votes, distances []int) {
 	}
 }
 
-func (me *Model) votes1v(k int, indices []int, votes Votes) {
+func (me *Model) votes1v(k int, indices []int, votes VoteCounter) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]
@@ -149,7 +149,7 @@ func (me *Model) votes1v(k int, indices []int, votes Votes) {
 	}
 }
 
-func (me *Model) votes1(k int, indices []int, votes Votes) {
+func (me *Model) votes1(k int, indices []int, votes VoteCounter) {
 	for i := range k {
 		index := indices[i]
 		label := me.Labels[index]

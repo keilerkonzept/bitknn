@@ -2,8 +2,8 @@ package bitknn
 
 import "slices"
 
-// Votes is a k-NN vote counter interface.
-type Votes interface {
+// VoteCounter is a k-NN vote counter interface.
+type VoteCounter interface {
 	// Clear removes all votes.
 	Clear()
 
@@ -20,6 +20,17 @@ type Votes interface {
 	// Add adds the specified delta to the vote count for the given label.
 	Add(label int, delta float64)
 }
+
+type discardVotes int
+
+// DiscardVotes is a no-op vote counter.
+const DiscardVotes = discardVotes(0)
+
+func (me discardVotes) Clear()                       {}
+func (me discardVotes) ArgMax() int                  { return 0 }
+func (me discardVotes) Max() float64                 { return 0 }
+func (me discardVotes) Get(label int) float64        { return 0 }
+func (me discardVotes) Add(label int, delta float64) {}
 
 // VoteSlice is a dense vote counter that stores votes in a slice.
 // It is efficient for small sets of class labels.

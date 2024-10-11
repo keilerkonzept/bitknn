@@ -66,13 +66,13 @@ func FitWide(data [][]uint64, labels []int, hash HashWide, opts ...bitknn.Option
 }
 
 // Predict1 predicts the label for a single input using the LSH model.
-func (me *WideModel) Predict1(k int, x []uint64, votes bitknn.Votes) int {
+func (me *WideModel) Predict1(k int, x []uint64, votes bitknn.VoteCounter) int {
 	me.PreallocateHeap(k)
 	return me.Predict1Into(k, x, votes, me.HeapBucketDistances, me.HeapBucketIDs, me.Narrow.HeapDistances, me.Narrow.HeapIndices)
 }
 
 // Predicts the label of a single input point. Each call allocates three new slices of length [k]+1 for the neighbor heaps.
-func (me *WideModel) Predict1Alloc(k int, x []uint64, votes bitknn.Votes) int {
+func (me *WideModel) Predict1Alloc(k int, x []uint64, votes bitknn.VoteCounter) int {
 	bucketDistances := make([]int, k+1)
 	bucketIDs := make([]uint64, k+1)
 	distances := make([]int, k+1)
@@ -82,7 +82,7 @@ func (me *WideModel) Predict1Alloc(k int, x []uint64, votes bitknn.Votes) int {
 }
 
 // Predict1Into predicts the label for a single input using the given slices (of length [k]+1 each) for the neighbor heaps.
-func (me *WideModel) Predict1Into(k int, x []uint64, votes bitknn.Votes, bucketDistances []int, bucketIDs []uint64, distances []int, indices []int) int {
+func (me *WideModel) Predict1Into(k int, x []uint64, votes bitknn.VoteCounter, bucketDistances []int, bucketIDs []uint64, distances []int, indices []int) int {
 	xp := me.Hash.Hash1Wide(x)
 	k0, _ := NearestWide(me.WideData, me.BucketIDs, me.Buckets, k, xp, x, bucketDistances, bucketIDs, distances, indices)
 	me.WideModel.Narrow.Vote(k0, distances, indices, votes)

@@ -10,7 +10,6 @@ import (
 )
 
 func Benchmark_Model_Predict1(b *testing.B) {
-	votes := make([]float64, 256)
 	type bench struct {
 		hashes   []lsh.Hash
 		dataSize []int
@@ -35,7 +34,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 						model.PreallocateHeap(k)
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, bitknn.VoteSlice(votes))
+							model.Predict1(k, query, bitknn.DiscardVotes)
 						}
 					})
 				}

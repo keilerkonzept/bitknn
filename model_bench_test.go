@@ -10,7 +10,6 @@ import (
 )
 
 func Benchmark_Model_Predict1(b *testing.B) {
-	votes := make([]float64, 256)
 	type bench struct {
 		dataSize []int
 		k        []int
@@ -31,7 +30,7 @@ func Benchmark_Model_Predict1(b *testing.B) {
 					model.PreallocateHeap(k)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
-						model.Predict1(k, query, bitknn.VoteSlice(votes))
+						model.Predict1(k, query, bitknn.DiscardVotes)
 					}
 				})
 			}
@@ -59,9 +58,10 @@ func Benchmark_Model_Predict1V(b *testing.B) {
 					query := rand.Uint64()
 
 					model.PreallocateHeap(k)
+					voteSlice := bitknn.VoteSlice(votes)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
-						model.Predict1(k, query, bitknn.VoteSlice(votes))
+						model.Predict1(k, query, &voteSlice)
 					}
 				})
 			}
@@ -89,10 +89,11 @@ func Benchmark_Model_Predict1D(b *testing.B) {
 						model.DistanceWeighting = d
 						model.DistanceWeightingFunc = func(d int) float64 { return 1 / float64(1+d) }
 						query := rand.Uint64()
+						voteSlice := bitknn.VoteSlice(votes)
 
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, bitknn.VoteSlice(votes))
+							model.Predict1(k, query, &voteSlice)
 						}
 					})
 				}
@@ -122,10 +123,11 @@ func Benchmark_Model_Predict1DV(b *testing.B) {
 						model.DistanceWeighting = d
 						model.DistanceWeightingFunc = func(d int) float64 { return 1 / float64(1+d) }
 						query := rand.Uint64()
+						voteSlice := bitknn.VoteSlice(votes)
 
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							model.Predict1(k, query, bitknn.VoteSlice(votes))
+							model.Predict1(k, query, &voteSlice)
 						}
 					})
 				}

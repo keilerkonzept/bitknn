@@ -10,6 +10,35 @@ import (
 
 const eps = 1e-9
 
+func TestVoteDiscard(t *testing.T) {
+	discard := bitknn.DiscardVotes
+	{
+		pre := discard
+		discard.Add(0, 1)
+		post := discard
+		if pre != post {
+			t.Fail()
+		}
+	}
+	if discard.Get(0) != 0 {
+		t.Fatal()
+	}
+	if discard.ArgMax() != 0 {
+		t.Fatal()
+	}
+	if discard.Max() != 0 {
+		t.Fatal()
+	}
+	{
+		pre := discard
+		discard.Clear()
+		post := discard
+		if pre != post {
+			t.Fail()
+		}
+	}
+}
+
 func TestVoteSlice_Clear(t *testing.T) {
 	rapid.Check(t, func(t *rapid.T) {
 		length := rapid.IntRange(0, 100).Draw(t, "length")
