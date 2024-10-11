@@ -30,7 +30,7 @@ The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) 
 
 ## Usage
 
-There are just three methods you'll usually need:
+There are just three methods you'll typically need:
 
 - **Fit** *(data, labels, [options])*: create a model from a dataset
 
