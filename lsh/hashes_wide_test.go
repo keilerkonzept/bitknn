@@ -57,7 +57,7 @@ func TestBlurWide(t *testing.T) {
 		trials := 1000
 
 		for range trials {
-			h := lsh.RandomBlurWide(2, 3, 10)
+			h := lsh.RandomBlurWide(2, 3, 100)
 			if h.Hash1Wide(x) == h.Hash1Wide(y) {
 				xyEqual++
 			}
@@ -81,7 +81,7 @@ func TestBlurWide(t *testing.T) {
 		trials := 1000
 
 		for range trials {
-			h := lsh.RandomBlurWideR(2, 3, 10, testrandom.Source)
+			h := lsh.RandomBlurWideR(2, 3, 100, testrandom.Source)
 			if h.Hash1Wide(x) == h.Hash1Wide(y) {
 				xyEqual++
 			}

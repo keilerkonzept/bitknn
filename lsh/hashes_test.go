@@ -186,7 +186,7 @@ func TestBlur(t *testing.T) {
 		trials := 1000
 
 		for range trials {
-			h := lsh.RandomBlur(3, 10)
+			h := lsh.RandomBlur(3, 50)
 			if h.Hash1(x) == h.Hash1(y) {
 				xyEqual++
 			}
@@ -210,7 +210,7 @@ func TestBlur(t *testing.T) {
 		trials := 10_000
 
 		for range trials {
-			h := lsh.RandomBlurR(3, 10, testrandom.Source)
+			h := lsh.RandomBlurR(3, 50, testrandom.Source)
 			if h.Hash1(x) == h.Hash1(y) {
 				xyEqual++
 			}
