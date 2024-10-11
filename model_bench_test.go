@@ -2,14 +2,13 @@ package bitknn_test
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"testing"
 
 	"github.com/keilerkonzept/bitknn"
 	"github.com/keilerkonzept/bitknn/internal/testrandom"
 )
 
-func Benchmark_Model_Predict(b *testing.B) {
+func BenchmarkModel(b *testing.B) {
 	type bench struct {
 		dataSize []int
 		k        []int
@@ -21,116 +20,25 @@ func Benchmark_Model_Predict(b *testing.B) {
 	for _, bench := range benches {
 		for _, dataSize := range bench.dataSize {
 			for _, k := range bench.k {
-				b.Run(fmt.Sprintf("N=%d_k=%d", dataSize, k), func(b *testing.B) {
-					data := testrandom.Data(dataSize)
-					labels := testrandom.Labels(dataSize)
-					model := bitknn.Fit(data, labels)
-					query := testrandom.Query()
+				data := testrandom.Data(dataSize)
+				labels := testrandom.Labels(dataSize)
+				model := bitknn.Fit(data, labels)
+				query := testrandom.Query()
 
+				b.Run(fmt.Sprintf("Op=Predict_bits=64_N=%d_k=%d", dataSize, k), func(b *testing.B) {
 					model.PreallocateHeap(k)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
 						model.Predict(k, query, bitknn.DiscardVotes)
 					}
 				})
-			}
-		}
-	}
-}
-
-func Benchmark_Model_PredictV(b *testing.B) {
-	votes := make([]float64, 256)
-	type bench struct {
-		dataSize []int
-		k        []int
-	}
-	benches := []bench{
-		{dataSize: []int{100}, k: []int{3, 10, 100}},
-	}
-	for _, bench := range benches {
-		for _, dataSize := range bench.dataSize {
-			for _, k := range bench.k {
-				b.Run(fmt.Sprintf("N=%d_k=%d", dataSize, k), func(b *testing.B) {
-					data := testrandom.Data(dataSize)
-					labels := testrandom.Labels(dataSize)
-					values := testrandom.Values(dataSize)
-					model := bitknn.Fit(data, labels, bitknn.WithValues(values))
-					query := rand.Uint64()
-
+				b.Run(fmt.Sprintf("Op=Find_bits=64_N=%d_k=%d", dataSize, k), func(b *testing.B) {
 					model.PreallocateHeap(k)
-					voteSlice := bitknn.VoteSlice(votes)
 					b.ResetTimer()
 					for n := 0; n < b.N; n++ {
-						model.Predict(k, query, &voteSlice)
+						model.Find(k, query)
 					}
 				})
-			}
-		}
-	}
-}
-
-func Benchmark_Model_PredictD(b *testing.B) {
-	votes := make([]float64, 256)
-	type bench struct {
-		dataSize []int
-		k        []int
-	}
-	benches := []bench{
-		{dataSize: []int{100}, k: []int{3, 10, 100}},
-	}
-	for _, d := range []bitknn.DistanceWeighting{bitknn.DistanceWeightingLinear, bitknn.DistanceWeightingQuadratic, bitknn.DistanceWeightingCustom} {
-		for _, bench := range benches {
-			for _, dataSize := range bench.dataSize {
-				for _, k := range bench.k {
-					b.Run(fmt.Sprintf("DistFunc=%v_N=%d_k=%d", d, dataSize, k), func(b *testing.B) {
-						data := testrandom.Data(dataSize)
-						labels := testrandom.Labels(dataSize)
-						model := bitknn.Fit(data, labels)
-						model.DistanceWeighting = d
-						model.DistanceWeightingFunc = func(d int) float64 { return 1 / float64(1+d) }
-						query := rand.Uint64()
-						voteSlice := bitknn.VoteSlice(votes)
-
-						b.ResetTimer()
-						for n := 0; n < b.N; n++ {
-							model.Predict(k, query, &voteSlice)
-						}
-					})
-				}
-			}
-		}
-	}
-}
-
-func Benchmark_Model_PredictDV(b *testing.B) {
-	votes := make([]float64, 256)
-	type bench struct {
-		dataSize []int
-		k        []int
-	}
-	benches := []bench{
-		{dataSize: []int{100}, k: []int{3, 10, 100}},
-	}
-	for _, d := range []bitknn.DistanceWeighting{bitknn.DistanceWeightingLinear, bitknn.DistanceWeightingQuadratic, bitknn.DistanceWeightingCustom} {
-		for _, bench := range benches {
-			for _, dataSize := range bench.dataSize {
-				for _, k := range bench.k {
-					b.Run(fmt.Sprintf("DistFunc=%v_N=%d_k=%d", d, dataSize, k), func(b *testing.B) {
-						data := testrandom.Data(dataSize)
-						labels := testrandom.Labels(dataSize)
-						values := testrandom.Values(dataSize)
-						model := bitknn.Fit(data, labels, bitknn.WithValues(values))
-						model.DistanceWeighting = d
-						model.DistanceWeightingFunc = func(d int) float64 { return 1 / float64(1+d) }
-						query := rand.Uint64()
-						voteSlice := bitknn.VoteSlice(votes)
-
-						b.ResetTimer()
-						for n := 0; n < b.N; n++ {
-							model.Predict(k, query, &voteSlice)
-						}
-					})
-				}
 			}
 		}
 	}

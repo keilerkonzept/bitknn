@@ -12,25 +12,25 @@ func NearestWide(data [][]uint64, k int, x []uint64, distances, indices []int) i
 	distance0 := &distances[0]
 
 	k0 := min(k, len(data))
-
 	for i, d := range data[:k0] {
 		dist := 0
-		for j, d := range d {
-			dist += bits.OnesCount64(x[j] ^ d)
+		for j, x := range x {
+			dist += bits.OnesCount64(d[j] ^ x)
 		}
 		heap.Push(dist, i)
 	}
 
-	if k0 < k {
+	if len(data) <= k {
 		return k0
 	}
 
 	maxDist := *distance0
+	_ = data[k]
 	for i := k; i < len(data); i++ {
 		dist := 0
 		d := data[i]
-		for j, d := range d {
-			dist += bits.OnesCount64(x[j] ^ d)
+		for j, x := range x {
+			dist += bits.OnesCount64(d[j] ^ x)
 		}
 		if dist >= maxDist {
 			continue

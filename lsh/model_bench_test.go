@@ -9,7 +9,7 @@ import (
 	"github.com/keilerkonzept/bitknn/lsh"
 )
 
-func Benchmark_Model_Predict(b *testing.B) {
+func BenchmarkModel(b *testing.B) {
 	type bench struct {
 		hashes   []lsh.Hash
 		dataSize []int
@@ -29,12 +29,20 @@ func Benchmark_Model_Predict(b *testing.B) {
 			query := testrandom.Query()
 			for _, k := range bench.k {
 				for _, hash := range bench.hashes {
-					b.Run(fmt.Sprintf("hash=%T_N=%d_k=%d", hash, dataSize, k), func(b *testing.B) {
+					b.Run(fmt.Sprintf("Op=Predict_hash=%T_N=%d_k=%d", hash, dataSize, k), func(b *testing.B) {
 						model := lsh.Fit(data, labels, hash)
 						model.PreallocateHeap(k)
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
 							model.Predict(k, query, bitknn.DiscardVotes)
+						}
+					})
+					b.Run(fmt.Sprintf("Op=Find_hash=%T_N=%d_k=%d", hash, dataSize, k), func(b *testing.B) {
+						model := lsh.Fit(data, labels, hash)
+						model.PreallocateHeap(k)
+						b.ResetTimer()
+						for n := 0; n < b.N; n++ {
+							model.Find(k, query)
 						}
 					})
 				}

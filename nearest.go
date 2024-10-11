@@ -23,11 +23,12 @@ func Nearest(data []uint64, k int, x uint64, distances, indices []int) int {
 		heap.Push(dist, i)
 	}
 
-	if k0 < k {
+	if len(data) <= k {
 		return k0
 	}
 
 	maxDist := *distance0
+	_ = data[k]
 	for i := k; i < len(data); i++ {
 		dist := bits.OnesCount64(x ^ data[i])
 		if dist >= maxDist {

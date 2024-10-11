@@ -75,7 +75,7 @@ func main() {
     // or, just return the nearest neighbor's distances and indices:
     // distances,indices := model.Find(k, 0b101011)
 
-    fmt.Println("Votes:", bitknn.VoteSlice(votes))
+    fmt.Println("Votes:", bitknn.votes)
 
     // you can also use a map for the votes.
     // this is good if you have a very large number of different labels:
@@ -120,7 +120,7 @@ func main() {
     // or, just return the nearest neighbor's distances and indices:
     // distances,indices := model.Find(k, 0b101011)
 
-    fmt.Println("Votes:", bitknn.VoteSlice(votes))
+    fmt.Println("Votes:", votes)
 
     // you can also use a map for the votes
     votesMap := make(map[int]float64)
@@ -187,7 +187,7 @@ func main() {
     query := pack.String("fob")
     model.Predict(k, query, bitknn.VoteSlice(votes))
 
-    fmt.Println("Votes:", bitknn.VoteSlice(votes))
+    fmt.Println("Votes:", votes)
 }
 ```
 
@@ -210,37 +210,72 @@ pkg: github.com/keilerkonzept/bitknn
 cpu: Apple M1 Pro
 ```
 
-| Op        | N       | k   | Distance weighting | Vote values | sec / op     | B/op | allocs/op |
-|-----------|---------|-----|--------------------|-------------|--------------|------|-----------|
-| `Predict` | 100     | 3   |                    |             | 138.7n ± 22% | 0    | 0         |
-| `Predict` | 100     | 3   |                    | ☑️           | 127.8n ± 11% | 0    | 0         |
-| `Predict` | 100     | 3   | linear             |             | 137.0n ± 11% | 0    | 0         |
-| `Predict` | 100     | 3   | linear             | ☑️           | 136.7n ± 10% | 0    | 0         |
-| `Predict` | 100     | 3   | quadratic          |             | 137.2n ±  7% | 0    | 0         |
-| `Predict` | 100     | 3   | quadratic          | ☑️           | 130.4n ±  4% | 0    | 0         |
-| `Predict` | 100     | 3   | custom             |             | 140.6n ±  7% | 0    | 0         |
-| `Predict` | 100     | 3   | custom             | ☑️           | 134.9n ± 13% | 0    | 0         |
-| `Predict` | 100     | 10  |                    |             | 307.4n ± 11% | 0    | 0         |
-| `Predict` | 100     | 10  |                    | ☑️           | 297.8n ± 15% | 0    | 0         |
-| `Predict` | 100     | 10  | linear             |             | 288.2n ± 18% | 0    | 0         |
-| `Predict` | 100     | 10  | linear             | ☑️           | 302.9n ± 14% | 0    | 0         |
-| `Predict` | 100     | 10  | quadratic          |             | 283.7n ± 15% | 0    | 0         |
-| `Predict` | 100     | 10  | quadratic          | ☑️           | 290.0n ± 13% | 0    | 0         |
-| `Predict` | 100     | 10  | custom             |             | 313.1n ± 17% | 0    | 0         |
-| `Predict` | 100     | 10  | custom             | ☑️           | 316.2n ± 11% | 0    | 0         |
-| `Predict` | 100     | 100 |                    | ☑️           | 545.4n ±  4% | 0    | 0         |
-| `Predict` | 100     | 100 | linear             |             | 542.4n ±  4% | 0    | 0         |
-| `Predict` | 100     | 100 | linear             | ☑️           | 577.5n ±  4% | 0    | 0         |
-| `Predict` | 100     | 100 | quadratic          |             | 553.1n ±  3% | 0    | 0         |
-| `Predict` | 100     | 100 | quadratic          | ☑️           | 582.4n ±  6% | 0    | 0         |
-| `Predict` | 100     | 100 | custom             |             | 683.8n ±  4% | 0    | 0         |
-| `Predict` | 100     | 100 | custom             | ☑️           | 748.5n ±  2% | 0    | 0         |
-| `Predict` | 1000    | 3   |                    |             | 669.5n ±  6% | 0    | 0         |
-| `Predict` | 1000    | 10  |                    |             | 930.3n ±  7% | 0    | 0         |
-| `Predict` | 1000    | 100 |                    |             | 3.762µ ±  5% | 0    | 0         |
-| `Predict` | 1000000 | 3   |                    |             | 532.1µ ±  1% | 0    | 0         |
-| `Predict` | 1000000 | 10  |                    |             | 534.5µ ±  1% | 0    | 0         |
-| `Predict` | 1000000 | 100 |                    |             | 551.7µ ±  1% | 0    | 0         |
+| Model     | Bits | N       | k   | Op        | s/op        | B/op | allocs/op |
+|-----------|------|---------|-----|-----------|-------------|------|-----------|
+| Model     | 64   | 100     | 3   | `Predict` | 99.06n ± 2% | 0    | 0         |
+| WideModel | 64   | 100     | 3   | `Predict` | 191.6n ± 1% | 0    | 0         |
+| Model     | 64   | 100     | 3   | `Find`    | 88.09n ± 0% | 0    | 0         |
+| WideModel | 64   | 100     | 3   | `Find`    | 182.8n ± 1% | 0    | 0         |
+| Model     | 64   | 100     | 10  | `Predict` | 225.1n ± 1% | 0    | 0         |
+| WideModel | 64   | 100     | 10  | `Predict` | 372.0n ± 1% | 0    | 0         |
+| Model     | 64   | 100     | 10  | `Find`    | 202.9n ± 1% | 0    | 0         |
+| WideModel | 64   | 100     | 10  | `Find`    | 345.2n ± 0% | 0    | 0         |
+| Model     | 64   | 1000    | 3   | `Predict` | 538.2n ± 1% | 0    | 0         |
+| WideModel | 64   | 1000    | 3   | `Predict` | 1.469µ ± 1% | 0    | 0         |
+| Model     | 64   | 1000    | 3   | `Find`    | 525.8n ± 1% | 0    | 0         |
+| WideModel | 64   | 1000    | 3   | `Find`    | 1.465µ ± 1% | 0    | 0         |
+| Model     | 64   | 1000    | 10  | `Predict` | 835.4n ± 1% | 0    | 0         |
+| WideModel | 64   | 1000    | 10  | `Predict` | 1.880µ ± 1% | 0    | 0         |
+| Model     | 64   | 1000    | 10  | `Find`    | 807.4n ± 0% | 0    | 0         |
+| WideModel | 64   | 1000    | 10  | `Find`    | 1.867µ ± 2% | 0    | 0         |
+| Model     | 64   | 1000    | 100 | `Predict` | 3.718µ ± 0% | 0    | 0         |
+| WideModel | 64   | 1000    | 100 | `Predict` | 4.935µ ± 0% | 0    | 0         |
+| Model     | 64   | 1000    | 100 | `Find`    | 3.494µ ± 0% | 0    | 0         |
+| WideModel | 64   | 1000    | 100 | `Find`    | 4.701µ ± 0% | 0    | 0         |
+| Model     | 64   | 1000000 | 3   | `Predict` | 458.8µ ± 0% | 0    | 0         |
+| WideModel | 64   | 1000000 | 3   | `Predict` | 1.301m ± 1% | 0    | 0         |
+| Model     | 64   | 1000000 | 3   | `Find`    | 457.9µ ± 1% | 0    | 0         |
+| WideModel | 64   | 1000000 | 3   | `Find`    | 1.302m ± 1% | 0    | 0         |
+| Model     | 64   | 1000000 | 10  | `Predict` | 456.9µ ± 0% | 0    | 0         |
+| WideModel | 64   | 1000000 | 10  | `Predict` | 1.295m ± 2% | 0    | 0         |
+| Model     | 64   | 1000000 | 10  | `Find`    | 457.6µ ± 1% | 0    | 0         |
+| WideModel | 64   | 1000000 | 10  | `Find`    | 1.298m ± 1% | 0    | 0         |
+| Model     | 64   | 1000000 | 100 | `Predict` | 474.5µ ± 1% | 0    | 0         |
+| WideModel | 64   | 1000000 | 100 | `Predict` | 1.316m ± 1% | 0    | 0         |
+| Model     | 64   | 1000000 | 100 | `Find`    | 466.9µ ± 0% | 0    | 0         |
+| WideModel | 64   | 1000000 | 100 | `Find`    | 1.306m ± 0% | 0    | 0         |
+| WideModel | 128  | 100     | 3   | `Predict` | 296.7n ± 0% | 0    | 0         |
+| WideModel | 128  | 100     | 3   | `Find`    | 285.8n ± 0% | 0    | 0         |
+| WideModel | 128  | 100     | 10  | `Predict` | 467.4n ± 1% | 0    | 0         |
+| WideModel | 128  | 100     | 10  | `Find`    | 441.1n ± 1% | 0    | 0         |
+| WideModel | 640  | 100     | 3   | `Predict` | 654.6n ± 1% | 0    | 0         |
+| WideModel | 640  | 100     | 3   | `Find`    | 640.3n ± 1% | 0    | 0         |
+| WideModel | 640  | 100     | 10  | `Predict` | 850.0n ± 1% | 0    | 0         |
+| WideModel | 640  | 100     | 10  | `Find`    | 825.0n ± 0% | 0    | 0         |
+| WideModel | 128  | 1000    | 3   | `Predict` | 2.384µ ± 0% | 0    | 0         |
+| WideModel | 128  | 1000    | 3   | `Find`    | 2.374µ ± 0% | 0    | 0         |
+| WideModel | 128  | 1000    | 10  | `Predict` | 2.900µ ± 0% | 0    | 0         |
+| WideModel | 128  | 1000    | 10  | `Find`    | 2.901µ ± 1% | 0    | 0         |
+| WideModel | 128  | 1000    | 100 | `Predict` | 5.630µ ± 1% | 0    | 0         |
+| WideModel | 128  | 1000    | 100 | `Find`    | 5.472µ ± 3% | 0    | 0         |
+| WideModel | 128  | 1000000 | 3   | `Predict` | 2.266m ± 0% | 0    | 0         |
+| WideModel | 128  | 1000000 | 3   | `Find`    | 2.273m ± 3% | 0    | 0         |
+| WideModel | 128  | 1000000 | 10  | `Predict` | 2.269m ± 0% | 0    | 0         |
+| WideModel | 128  | 1000000 | 10  | `Find`    | 2.261m ± 1% | 0    | 0         |
+| WideModel | 128  | 1000000 | 100 | `Predict` | 2.295m ± 1% | 0    | 0         |
+| WideModel | 128  | 1000000 | 100 | `Find`    | 2.289m ± 0% | 0    | 0         |
+| WideModel | 640  | 1000    | 3   | `Predict` | 6.214µ ± 2% | 0    | 0         |
+| WideModel | 640  | 1000    | 3   | `Find`    | 6.201µ ± 1% | 0    | 0         |
+| WideModel | 640  | 1000    | 10  | `Predict` | 6.777µ ± 1% | 0    | 0         |
+| WideModel | 640  | 1000    | 10  | `Find`    | 6.728µ ± 1% | 0    | 0         |
+| WideModel | 640  | 1000    | 100 | `Predict` | 11.16µ ± 2% | 0    | 0         |
+| WideModel | 640  | 1000    | 100 | `Find`    | 10.85µ ± 2% | 0    | 0         |
+| WideModel | 640  | 1000000 | 3   | `Predict` | 5.756m ± 4% | 0    | 0         |
+| WideModel | 640  | 1000000 | 3   | `Find`    | 5.832m ± 2% | 0    | 0         |
+| WideModel | 640  | 1000000 | 10  | `Predict` | 5.842m ± 1% | 0    | 0         |
+| WideModel | 640  | 1000000 | 10  | `Find`    | 5.830m ± 5% | 0    | 0         |
+| WideModel | 640  | 1000000 | 100 | `Predict` | 5.914m ± 6% | 0    | 0         |
+| WideModel | 640  | 1000000 | 100 | `Find`    | 5.872m ± 1% | 0    | 0         |
 
 ## License
 

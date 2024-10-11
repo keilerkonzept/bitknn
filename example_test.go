@@ -23,7 +23,7 @@ func Example() {
 	// or, just return the nearest neighbor's distances and indices:
 	// distances,indices := model.Find(k, 0b101011)
 
-	fmt.Println("Votes:", bitknn.VoteSlice(votes))
+	fmt.Println("Votes:", votes)
 
 	// you can also use a map for the votes.
 	// this is good if you have a very large number of different labels:
@@ -56,7 +56,7 @@ func ExampleFitWide() {
 	query := pack.String("fob")
 	model.Predict(k, query, bitknn.VoteSlice(votes))
 
-	fmt.Println("Votes:", bitknn.VoteSlice(votes))
+	fmt.Println("Votes:", votes)
 
 	// Output:
 	// Votes: [0.25 0.16666666666666666]
