@@ -1,5 +1,5 @@
 # bitknn
-[![Coverage](https://img.shields.io/badge/Coverage-100.0%25-brightgreen)](https://github.com/keilerkonzept/bitknn/actions/workflows/gocover.yaml)
+[![Coverage](https://img.shields.io/badge/Coverage-99.9%25-brightgreen)](https://github.com/keilerkonzept/bitknn/actions/workflows/gocover.yaml)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/keilerkonzept/bitknn.svg)](https://pkg.go.dev/github.com/keilerkonzept/bitknn)
 [![Go Report Card](https://goreportcard.com/badge/github.com/keilerkonzept/bitknn)](https://goreportcard.com/report/github.com/keilerkonzept/bitknn)
