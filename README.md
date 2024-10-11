@@ -69,7 +69,7 @@ func main() {
 
 Locality-Sensitive Hashing (LSH) is a type of approximate k-NN search. It's faster at the expense of accuracy.
 
-LSH works by hashing data points such that points that are close in Hamming space tend to land in the same bucket, and computing k-nearest neighbors only on the buckets with the k nearest hashes. In particular, for *k*=1 only one bucket needs to be examined.
+LSH works by hashing data points such that points that are close in Hamming space tend to land in the same bucket. In particular, for *k*=1 only one bucket needs to be examined.
 
 ```go
 package main
