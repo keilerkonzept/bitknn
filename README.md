@@ -32,7 +32,7 @@ The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) 
 
 There are just three methods you'll typically need:
 
-- **Fit** *(data, labels, [\[options\]](#options)*: create a model from a dataset
+- **Fit** *(data, labels, [\[options\]](#options))*: create a model from a dataset
 
   Variants: [`bitknn.Fit`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Fit), [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide), [`lsh.Fit`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Fit), [`lsh.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#FitWide)
 - **Find** *(k, point)*: Given a point, return the *k* nearest neighbor's indices and distances.
