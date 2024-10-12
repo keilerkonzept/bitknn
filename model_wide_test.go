@@ -10,7 +10,7 @@ import (
 	"pgregory.net/rapid"
 )
 
-func Test_Model_64bit_Equal_To_Narrow(t *testing.T) {
+func TestModel_64bitWideEquivNarrow(t *testing.T) {
 	id := func(a uint64) uint64 { return a }
 	rapid.Check(t, func(t *rapid.T) {
 		k := rapid.IntRange(3, 1001).Draw(t, "k")
@@ -69,5 +69,59 @@ func Test_Model_64bit_Equal_To_Narrow(t *testing.T) {
 			}
 		}
 
+	})
+}
+
+func TestModel_FindV_Equiv_Find_0Remainder(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		k := rapid.IntRange(1, 100).Draw(t, "k")
+		n := rapid.IntRange(2, 100).Draw(t, "n")
+		dims := rapid.IntRange(1, 10).Draw(t, "dims")
+		data := rapid.SliceOfN(rapid.SliceOfN(rapid.Uint64(), dims, dims), n*k, n*k).Draw(t, "data")
+		q := rapid.SliceOfN(rapid.Uint64(), dims, dims).Draw(t, "q")
+		batchSize := k
+		m1 := bitknn.FitWide(data, nil)
+		m2 := bitknn.FitWide(data, nil)
+		batch := make([]uint32, batchSize)
+		vds, vis := m1.FindV(k, q, batch)
+		ds, is := m2.Find(k, q)
+		if !reflect.DeepEqual(vds, ds) {
+			t.Fatal(vds, ds)
+		}
+		if !reflect.DeepEqual(vis, is) {
+			t.Fatal(vis, is)
+		}
+	})
+}
+
+func TestModel_FindV_Equiv_Find(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		k := rapid.IntRange(0, 1000).Draw(t, "k")
+		dims := rapid.IntRange(1, 10_000).Draw(t, "dims")
+		data := rapid.SliceOf(rapid.SliceOfN(rapid.Uint64(), dims, dims)).Draw(t, "data")
+		batchSizes := []int{0, len(data), len(data) - 1, len(data) - 2, 2048, 100_000}
+		q := rapid.SliceOfN(rapid.Uint64(), dims, dims).Draw(t, "q")
+		for _, batchSize := range batchSizes {
+			batchSize = max(k, batchSize)
+			m1 := bitknn.FitWide(data, nil)
+			m2 := bitknn.FitWide(data, nil)
+			batch := make([]uint32, batchSize)
+			vds, vis := m1.FindV(k, q, batch)
+			ds, is := m2.Find(k, q)
+			if !reflect.DeepEqual(vds, ds) {
+				t.Fatal(vds, ds)
+			}
+			if !reflect.DeepEqual(vis, is) {
+				t.Fatal(vis, is)
+			}
+			batchAll := make([]uint32, batchSize)
+			vds, vis = m1.FindV(k, q, batchAll)
+			if !reflect.DeepEqual(vds, ds) {
+				t.Fatal(vds, ds)
+			}
+			if !reflect.DeepEqual(vis, is) {
+				t.Fatal(vis, is)
+			}
+		}
 	})
 }

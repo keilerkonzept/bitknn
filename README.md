@@ -15,6 +15,8 @@ If you need to classify **binary feature vectors that fit into `uint64`s**, this
 
 If your vectors are **longer than 64 bits**, you can [pack](#packing-wide-data) them into `[]uint64` and classify them using the ["wide" model variants](#packing-wide-data).
 
+On ARM64 with NEON vector instruction support, `bitknn` can be [a bit faster than otherwise](#arm64-neon-support) on wide data.
+
 You can optionally weigh class votes by distance, or specify different vote values per data point.
 
 The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) implements several [Locality-Sensitive Hashing (LSH)](https://en.m.wikipedia.org/wiki/Locality-sensitive_hashing) schemes for `uint64` feature vectors.
@@ -24,6 +26,7 @@ The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) 
   - [Basic usage](#basic-usage)
   - [LSH](#lsh)
   - [Packing wide data](#packing-wide-data)
+  - [ARM64 NEON Support](#arm64-neon-support)
 - [Options](#options)
 - [Benchmarks](#benchmarks)
 - [License](#license)
@@ -37,11 +40,11 @@ There are just three methods you'll typically need:
   Variants: [`bitknn.Fit`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Fit), [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide), [`lsh.Fit`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Fit), [`lsh.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#FitWide)
 - **Find** *(k, point)*: Given a point, return the *k* nearest neighbor's indices and distances.
 
-  Variants: [`bitknn.Model.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Find), [`bitknn.WideModel.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Find), [`lsh.Model.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Model.Find), [`lsh.WideModel.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#WideModel.Find)
+  Variants: [`bitknn.Model.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Find), [`bitknn.WideModel.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Find), [`lsh.Model.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Model.Find), [`lsh.WideModel.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#WideModel.Find), [`bitknn.WideModel.FindV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.FindV) (vectorized on ARM64 with NEON instructions)
 
 - **Predict** *(k, point, votes)*: Predict the label for a given point based on its nearest neighbors, write the label votes into the provided vote counter.
 
-  Variants: [`bitknn.Model.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Predict), [`bitknn.WideModel.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Predict), [`lsh.Model.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Model.Predict), [`lsh.WideModel.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#WideModel.Predict)
+  Variants: [`bitknn.Model.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Predict), [`bitknn.WideModel.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Predict), [`lsh.Model.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Model.Predict), [`lsh.WideModel.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#WideModel.Predict), [`bitknn.WideModel.PredictV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.PredictV) (vectorized on ARM64 with NEON instructions).
 
 Each of the above methods is available on each model type. There are four model types in total:
 
@@ -192,6 +195,29 @@ func main() {
 ```
 
 The wide model fitting function [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide) accepts the same [Options](#options) as the "narrow" one.
+
+### ARM64 NEON Support
+
+For ARM64 CPUs with NEON instructions, `bitknn` has a [vectorized distance function for `[]uint64s`s](internal/neon/distance_arm64.s) that is about twice as fast as what the compiler generates.
+
+When run on such a CPU, the ***V** methods [`WideModel.FindV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.FindV) and [`WideModel.PredictV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.predictV) are  noticeably faster than  the regular `Find`/`Predict`:
+
+| Bits  | N       | k   | `Find` s/op  | `FindV` s/op | diff                   |
+|-------|---------|-----|--------------|--------------|------------------------|
+| 128   | 1000    | 3   | 2.374µ ± 0%  | 1.792µ ± 0%  | -24.54% (p=0.000 n=10) |
+| 128   | 1000    | 10  | 2.901µ ± 1%  | 2.028µ ± 1%  | -30.08% (p=0.000 n=10) |
+| 128   | 1000    | 100 | 5.472µ ± 3%  | 4.359µ ± 1%  | -20.34% (p=0.000 n=10) |
+| 128   | 1000000 | 3   | 2.273m ± 3%  | 1.380m ± 2%  | -39.27% (p=0.000 n=10) |
+| 128   | 1000000 | 10  | 2.261m ± 1%  | 1.406m ± 1%  | -37.84% (p=0.000 n=10) |
+| 128   | 1000000 | 100 | 2.289m ± 0%  | 1.425m ± 2%  | -37.76% (p=0.000 n=10) |
+| 640   | 1000    | 3   | 6.201µ ± 1%  | 3.716µ ± 0%  | -40.07% (p=0.000 n=10) |
+| 640   | 1000    | 10  | 6.728µ ± 1%  | 3.973µ ± 1%  | -40.96% (p=0.000 n=10) |
+| 640   | 1000    | 100 | 10.855µ ± 2% | 6.917µ ± 1%  | -36.28% (p=0.000 n=10) |
+| 640   | 1000000 | 3   | 5.832m ± 2%  | 3.337m ± 1%  | -42.78% (p=0.000 n=10) |
+| 640   | 1000000 | 10  | 5.830m ± 5%  | 3.339m ± 1%  | -42.73% (p=0.000 n=10) |
+| 640   | 1000000 | 100 | 5.872m ± 1%  | 3.361m ± 1%  | -42.77% (p=0.000 n=10) |
+| 8192  | 1000000 | 10  | 72.66m ± 1%  | 30.96m ± 3%  | -57.39% (p=0.000 n=10) |
+
 
 ## Options
 
