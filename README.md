@@ -17,12 +17,9 @@ If your vectors are **longer than 64 bits**, you can [pack](#packing-wide-data) 
 
 You can optionally weigh class votes by distance, or specify different vote values per data point.
 
-The sub-package [`lsh`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh) implements several [Locality-Sensitive Hashing (LSH)](https://en.m.wikipedia.org/wiki/Locality-sensitive_hashing) schemes for `uint64` feature vectors.
-
 **Contents**
 - [Usage](#usage)
   - [Basic usage](#basic-usage)
-  - [LSH](#lsh)
   - [Packing wide data](#packing-wide-data)
   - [ARM64 NEON Support](#arm64-neon-support)
 - [Options](#options)
@@ -35,19 +32,20 @@ There are just three methods you'll typically need:
 
 - **Fit** *(data, labels, [\[options\]](#options))*: create a model from a dataset
 
-  Variants: [`bitknn.Fit`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Fit), [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide), [`lsh.Fit`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Fit), [`lsh.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#FitWide)
+  Variants: [`bitknn.Fit`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Fit), [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide)
+
 - **Find** *(k, point)*: Given a point, return the *k* nearest neighbor's indices and distances.
 
-  Variants: [`bitknn.Model.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Find), [`bitknn.WideModel.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Find), [`lsh.Model.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Model.Find), [`lsh.WideModel.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#WideModel.Find), [`bitknn.WideModel.FindV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.FindV) (vectorized on ARM64 with NEON instructions)
+  Variants: [`bitknn.Model.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Find), [`bitknn.WideModel.Find`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Find), [`bitknn.WideModel.FindV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.FindV) (vectorized on ARM64 with NEON instructions)
 
 - **Predict** *(k, point, votes)*: Predict the label for a given point based on its nearest neighbors, write the label votes into the provided vote counter.
 
-  Variants: [`bitknn.Model.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Predict), [`bitknn.WideModel.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Predict), [`lsh.Model.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Model.Predict), [`lsh.WideModel.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#WideModel.Predict), [`bitknn.WideModel.PredictV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.PredictV) (vectorized on ARM64 with NEON instructions).
+  Variants: [`bitknn.Model.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model.Predict), [`bitknn.WideModel.Predict`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.Predict), [`bitknn.WideModel.PredictV`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel.PredictV) (vectorized on ARM64 with NEON instructions).
 
-Each of the above methods is available on each model type. There are four model types in total:
+Each of the above methods is available on either model type:
 
-- **Exact k-NN** models: [`bitknn.Model`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model) (64 bits), [`bitknn.WideModel`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel) (*N* * 64 bits)
-- **Approximate (ANN)** models: [`lsh.Model`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Model) (64 bits), [`lsh.WideModel`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#WideModel) (*N* * 64 bits)
+- [`bitknn.Model`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#Model) (64 bits)
+- [`bitknn.WideModel`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#WideModel) (*N* * 64 bits)
 
 ### Basic usage
 
@@ -86,76 +84,14 @@ func main() {
 }
 ```
 
-### LSH
-
-Locality-Sensitive Hashing (LSH) is a type of approximate k-NN search. It's faster at the expense of accuracy.
-
-LSH works by hashing data points such that points that are close in Hamming space tend to land in the same bucket. In particular, for *k*=1 only one bucket needs to be examined.
-
-```go
-package main
-
-import (
-    "fmt"
-    "github.com/keilerkonzept/bitknn/lsh"
-    "github.com/keilerkonzept/bitknn"
-)
-
-func main() {
-    // feature vectors packed into uint64s
-    data := []uint64{0b101010, 0b111000, 0b000111}
-    // class labels
-    labels := []int{0, 1, 1}
-
-    // Define a hash function (e.g., MinHash)
-    hash := lsh.RandomMinHash()
-
-    // Fit an LSH model
-    model := lsh.Fit(data, labels, hash, bitknn.WithLinearDistanceWeighting())
-
-    // one vote counter per class
-    votes := make([]float64, 2)
-
-    k := 2
-    model.Predict(k, 0b101011, bitknn.VoteSlice(votes))
-    // or, just return the nearest neighbor's distances and indices:
-    // distances,indices := model.Find(k, 0b101011)
-
-    fmt.Println("Votes:", votes)
-
-    // you can also use a map for the votes
-    votesMap := make(map[int]float64)
-    model.Predict(k, 0b101011, bitknn.VoteMap(votesMap))
-    fmt.Println("Votes for 0:", votesMap[0])
-}
-```
-
-The model accepts anything that implements the [`lsh.Hash` interface](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Hash) as a hash function. Several functions are pre-defined:
-
-- [MinHash](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#MinHash): An implementation of the [MinHash scheme](https://en.m.wikipedia.org/wiki/MinHash) for bit vectors.
-
-  Constructors: [RandomMinHash](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHash), [RandomMinHashR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHashR).
-- [MinHashes](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#MinHash): Concatenation of several *MinHash*es.
-
-  Constructors: [RandomMinHashes](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHashes), [RandomMinHashesR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomMinHashesR).
-- [Blur](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Blur): A threshold-based variation on bit sampling.
-
-  Constructors: [RandomBlur](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBlur), [RandomBlurR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBlurR), [BoxBlur](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BoxBlur), .
-- [BitSample](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BitSample): A random sampling of bits from the feature vector.
-
-    Constructors: [RandomBitSample](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBitSample), [RandomBitSampleR](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#RandomBitSampleR).
-
-For datasets of vectors longer than 64 bits, the `lsh` package also provides a [`lsh.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#FitWide) function, and "wide" versions of the hash functions ([MinHashWide](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#MinHashWide), [BlurWide](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BlurWide), [BitSampleWide](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#BitSampleWide))
-
-The  [`lsh.Fit`/`lsh.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/lsh#Fit) functions accept the same [Options](#options) as the others.
-
 ### Packing wide data
 
 If your vectors are longer than 64 bits, you can still use `bitknn` if you [pack](https://pkg.go.dev/github.com/keilerkonzept/bitknn/pack) them into `[]uint64`. The [`pack` package](https://pkg.go.dev/github.com/keilerkonzept/bitknn/pack) defines helper functions to pack `string`s and `[]byte`s into `[]uint64`s.
 
 > It's faster to use a `[][]uint64` allocated using a flat backing slice, laid out in one contiguous memory block. If you already have a non-contiguous `[][]uint64`, you can use [`pack.ReallocateFlat`](https://pkg.go.dev/github.com/keilerkonzept/bitknn/pack#ReallocateFlat) to re-allocate the dataset using a flat 1d backing slice.
 
-The exact k-NN model in `bitknn` and the approximate-NN model in `lsh` each have a `Wide` variant that accepts slice-valued data points:
+The wide model fitting function is [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide) and accepts the same [Options](#options) as the "narrow" one:
+
 
 ```go
 package main
@@ -178,8 +114,6 @@ func main() {
     labels := []int{0, 1, 1}
 
     model := bitknn.FitWide(data, labels, bitknn.WithLinearDistanceWeighting())
-    // also using LSH:
-    // model := lsh.FitWide(data, labels, lsh.RandomMinHash(), bitknn.WithLinearDistanceWeighting())
 
     // one vote counter per class
     votes := make([]float64, 2)
@@ -191,8 +125,6 @@ func main() {
     fmt.Println("Votes:", votes)
 }
 ```
-
-The wide model fitting function [`bitknn.FitWide`](https://pkg.go.dev/github.com/keilerkonzept/bitknn#FitWide) accepts the same [Options](#options) as the "narrow" one.
 
 ### ARM64 NEON Support
 

@@ -46,8 +46,6 @@ func ExampleFitWide() {
 	labels := []int{0, 1, 1}
 
 	model := bitknn.FitWide(data, labels, bitknn.WithLinearDistanceWeighting())
-	// also using LSH:
-	// model := lsh.FitWide(data, labels, lsh.RandomMinHash(), bitknn.WithLinearDistanceWeighting())
 
 	// one vote counter per class
 	votes := make([]float64, 2)

@@ -125,3 +125,27 @@ func TestModel_FindV_Equiv_Find(t *testing.T) {
 		}
 	})
 }
+
+func TestModel_PredictV_Equiv_Predict(t *testing.T) {
+	rapid.Check(t, func(t *rapid.T) {
+		k := rapid.IntRange(0, 1000).Draw(t, "k")
+		dims := rapid.IntRange(1, 10_000).Draw(t, "dims")
+		data := rapid.SliceOf(rapid.SliceOfN(rapid.Uint64(), dims, dims)).Draw(t, "data")
+		batchSizes := []int{0, len(data), len(data) - 1, len(data) - 2, 2048, 100_000}
+		q := rapid.SliceOfN(rapid.Uint64(), dims, dims).Draw(t, "q")
+		labels := rapid.SliceOfN(rapid.Int(), len(data), len(data)).Draw(t, "labels")
+		for _, batchSize := range batchSizes {
+			batchSize = max(k, batchSize)
+			m1 := bitknn.FitWide(data, labels)
+			m2 := bitknn.FitWide(data, labels)
+			batch := make([]uint32, batchSize)
+			vv := make(bitknn.VoteMap)
+			v := make(bitknn.VoteMap)
+			m1.PredictV(k, q, batch, vv)
+			m2.Predict(k, q, v)
+			if !reflect.DeepEqual(vv, v) {
+				t.Fatal(vv, v)
+			}
+		}
+	})
+}
