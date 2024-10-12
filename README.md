@@ -13,9 +13,7 @@ import "github.com/keilerkonzept/bitknn"
 
 If you need to classify **binary feature vectors that fit into `uint64`s**, this library might be useful. It is fast mainly because we can use cheap bitwise ops (XOR + POPCNT) to calculate distances between `uint64` values. For smaller datasets, the performance of the [neighbor heap](internal/heap/heap.go) is also relevant, and so this part has been tuned here also.
 
-If your vectors are **longer than 64 bits**, you can [pack](#packing-wide-data) them into `[]uint64` and classify them using the ["wide" model variants](#packing-wide-data).
-
-On ARM64 with NEON vector instruction support, `bitknn` can be [a bit faster than otherwise](#arm64-neon-support) on wide data.
+If your vectors are **longer than 64 bits**, you can [pack](#packing-wide-data) them into `[]uint64` and classify them using the ["wide" model variants](#packing-wide-data). On ARM64 with NEON vector instruction support, `bitknn` can be [a bit faster still](#arm64-neon-support) on wide data.
 
 You can optionally weigh class votes by distance, or specify different vote values per data point.
 
