@@ -7,7 +7,7 @@ import (
 	"github.com/keilerkonzept/bitknn/internal/neon"
 )
 
-// [bitknn.Nearest], but for wide data.
+// [Nearest], but for wide data.
 func NearestWide(data [][]uint64, k int, x []uint64, distances, indices []int) int {
 	heap := heap.MakeMax(distances, indices)
 	distance0 := &distances[0]

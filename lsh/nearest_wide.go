@@ -7,7 +7,7 @@ import (
 	"github.com/keilerkonzept/bitknn/internal/slice"
 )
 
-// Nearest, but for wide data.
+// [Nearest], but for wide data.
 func NearestWide(data [][]uint64, bucketIDs []uint64, buckets map[uint64]slice.IndexRange, k int, xh uint64, x []uint64, bucketDistances []int, heapBucketIDs []uint64, distances []int, indices []int) (int, int) {
 	dataHeap := heap.MakeMax[int](distances, indices)
 	exactBucket := buckets[xh]

@@ -29,7 +29,7 @@ func (me *WideModel) Find(k int, x []uint64) ([]int, []int) {
 	return me.FindInto(k, x, me.Narrow.HeapDistances, me.Narrow.HeapIndices)
 }
 
-// FindV is [Find], but vectorizable (currently only on ARM64 with NEON instructions).
+// FindV is [WideModel.Find], but vectorizable (currently only on ARM64 with NEON instructions).
 // The provided [batch] slice must have length >=k and is used to pre-compute batches of distances.
 func (me *WideModel) FindV(k int, x []uint64, batch []uint32) ([]int, []int) {
 	me.PreallocateHeap(k)
@@ -45,7 +45,7 @@ func (me *WideModel) FindInto(k int, x []uint64, distances []int, indices []int)
 	return distances[:k], indices[:k]
 }
 
-// FindIntoV is [FindInto], but vectorizable (currently only on ARM64 with NEON instructions).
+// FindIntoV is [WideModel.FindInto], but vectorizable (currently only on ARM64 with NEON instructions).
 // The provided [batch] slice must have length >=k and is used to pre-compute batches of distances.
 func (me *WideModel) FindIntoV(k int, x []uint64, batch []uint32, distances []int, indices []int) ([]int, []int) {
 	k = NearestWideV(me.WideData, k, x, batch, distances, indices)
@@ -67,14 +67,14 @@ func (me *WideModel) PredictInto(k int, x []uint64, distances []int, indices []i
 	return k
 }
 
-// PredictV is [Predict], but vectorizable (currently only on ARM64 with NEON instructions).
+// PredictV is [WideModel.Predict], but vectorizable (currently only on ARM64 with NEON instructions).
 // The provided [batch] slice must have length >=k and is used to pre-compute batches of distances.
 func (me *WideModel) PredictV(k int, x []uint64, batch []uint32, votes VoteCounter) int {
 	me.PreallocateHeap(k)
 	return me.PredictIntoV(k, x, batch, me.Narrow.HeapDistances, me.Narrow.HeapIndices, votes)
 }
 
-// PredictIntoV is [PredictInto], but vectorizable (currently only on ARM64 with NEON instructions).
+// PredictIntoV is [WideModel.PredictInto], but vectorizable (currently only on ARM64 with NEON instructions).
 // The provided [batch] slice must have length >=k and is used to pre-compute batches of distances.
 func (me *WideModel) PredictIntoV(k int, x []uint64, batch []uint32, distances []int, indices []int, votes VoteCounter) int {
 	k = NearestWideV(me.WideData, k, x, batch, distances, indices)
